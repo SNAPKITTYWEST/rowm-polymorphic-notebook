@@ -29,15 +29,25 @@ class AhmadJITEngine {
                 throw new Error('WebLLM library not loaded. Check CDN script.');
             }
 
+            console.log('✓ window.webllm loaded successfully (no storage access)');
+            console.log('✓ WebLLM version:', typeof webllm.version !== 'undefined' ? webllm.version : 'unknown');
+
             // WebLLM 0.2.32 uses new MLCEngine()
             if (typeof webllm.MLCEngine !== 'function') {
                 throw new Error('WebLLM MLCEngine not available');
             }
 
+            console.log('✓ MLCEngine constructor available');
             console.log(`Initializing WebLLM engine with model: ${this.modelId}`);
 
-            // Initialize MLCEngine
-            this.engine = new webllm.MLCEngine();
+            // Initialize MLCEngine with in-memory caching (no IndexedDB)
+            // This prevents storage tracking issues while maintaining performance
+            this.engine = new webllm.MLCEngine({
+                model: this.modelId,
+                useIndexedDBCache: false,  // CRITICAL: disable IndexedDB storage access
+                preferredDevice: 'webgpu'  // Try WebGPU, fallback to WASM
+            });
+            console.log('MLCEngine created with in-memory caching (no IndexedDB)');
 
             // Load the model (this downloads ~500MB weights)
             try {
@@ -48,7 +58,7 @@ class AhmadJITEngine {
                         console.log('Model init progress:', msg);
                     },
                 });
-                console.log('Model loaded successfully');
+                console.log('Model loaded successfully (in-memory, will be lost on page refresh)');
             } catch (reloadError) {
                 console.error('Model reload failed:', reloadError);
                 throw new Error(`Failed to load model ${this.modelId}: ${reloadError.message}`);
