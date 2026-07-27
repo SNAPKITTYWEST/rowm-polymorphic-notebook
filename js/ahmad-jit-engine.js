@@ -16,7 +16,7 @@ class AhmadJITEngine {
         try {
             this.state = 'CHECKING_WEBGPU';
             if (!navigator.gpu) {
-                throw new Error('WebGPU not supported in this browser');
+                console.warn('WebGPU not available, will use CPU');
             }
 
             this.state = 'LOADING';
@@ -30,10 +30,13 @@ class AhmadJITEngine {
                 throw new Error('WebLLM CreateMLCEngine not available');
             }
 
+            // Initialize with no storage (privacy mode)
             this.engine = await webllm.CreateMLCEngine(modelId, {
                 initProgressCallback: (msg) => {
                     console.log('WebLLM init:', msg);
-                }
+                },
+                useIndexedDBCache: false, // Disable storage to avoid privacy blocking
+                useWebGPU: !!navigator.gpu,
             });
 
             this.state = 'INDEXING';
