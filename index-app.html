@@ -7,6 +7,7 @@
     <title>Ω Isomorphic WORM Notebook</title>
     <link rel="stylesheet" href="styles/notebook.css">
     <link rel="stylesheet" href="styles/jit-box.css">
+    <link rel="stylesheet" href="styles/ahmad-bot.css">
 </head>
 <body>
     <div id="notebook-container">
@@ -96,12 +97,15 @@
     <!-- Animation Engine (SVG Canvas) -->
     <canvas id="animation-canvas" style="display: none;"></canvas>
 
+    <!-- WebLLM Library (Real Model Inference) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.33/lib/web-llm.js"></script>
+
     <!-- Scripts -->
     <script src="scripts/unicode-ir.js"></script>
     <script src="scripts/worm-receipts.js"></script>
     <script src="scripts/notebook-context.js"></script>
-    <script src="scripts/webllm-engine.js"></script>
-    <script src="scripts/jit-box.js"></script>
+    <script src="scripts/ahmad-bot-engine.js"></script>
+    <script src="scripts/ahmad-bot-ui.js"></script>
     <script src="scripts/notebook-engine.js"></script>
 </body>
 </html>
