@@ -1,0 +1,236 @@
+{
+  "project": {
+    "name": "ROWM: Read-Once-Write-Many Polymorphic Notebook Iterator",
+    "version": "1.0.0",
+    "status": "production",
+    "repository": "https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook",
+    "license": "Apache-2.0 OR MIT",
+    "authors": [
+      "Ahmad Ali Parr <ahmad@sovereign-transformer.dev>",
+      "Jessica SNAPKITTYWEST <jessica@collectivekitty.com>"
+    ],
+    "description": "Self-modifying notebook system with formal verification, 30+ language compilation, cryptographic sealing, and WORM ledger architecture"
+  },
+
+  "architecture": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Execution Core",
+        "crates": ["subleq-vm", "subleq-ir"],
+        "lines_of_code": 2720,
+        "components": [
+          "SUBLEQ VM (One-Instruction Set Computer)",
+          "Von Neumann unified memory model",
+          "WORM checkpointing for rollback",
+          "Mutation logging with telemetry"
+        ],
+        "key_files": [
+          "crates/subleq-vm/src/vm.rs",
+          "crates/subleq-vm/src/memory.rs",
+          "crates/subleq-ir/src/ast.rs",
+          "crates/subleq-ir/src/bytecode.rs"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "Polyglot Frontend",
+        "crates": ["polyglot-frontend"],
+        "lines_of_code": 1200,
+        "components": [
+          "30+ language parser registry",
+          "Tier 1-5 language classification",
+          "Unified AST normalization",
+          "Language-specific adapters"
+        ],
+        "languages": [
+          "Python", "JavaScript", "TypeScript", "Rust", "C", "C++", "Go", "Zig",
+          "Lisp", "Scheme", "Haskell", "OCaml", "Prolog", "Erlang",
+          "APL", "J", "Forth", "Factor", "Brainfuck", "SUBLEQ", "M4"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Verification & Proof",
+        "crates": ["invariant-extractor", "proof-validator"],
+        "lines_of_code": 1680,
+        "components": [
+          "Symbolic execution engine",
+          "Abstract interpretation (interval domain)",
+          "SUBLEQ pattern recognition",
+          "Curry-Howard type checker",
+          "WORM-sealed rollback"
+        ],
+        "proof_obligations": [
+          "InvariantPreservation",
+          "SemanticPreservation",
+          "LoopInvariantMaintenance",
+          "ReceiptChainIntegrity"
+        ]
+      },
+      {
+        "phase": 4,
+        "name": "Morphing & Orchestration",
+        "crates": ["m4-morph", "notebook-kernel"],
+        "lines_of_code": 1080,
+        "components": [
+          "GNU M4 macro engine with sandbox",
+          "Capability-limited builtins",
+          "State feedback loops (Cell N → N+1)",
+          "Jupyter protocol kernel",
+          "Zero-copy IPC (shared memory)",
+          "Decentralized execution ring",
+          "Live telemetry streaming"
+        ]
+      },
+      {
+        "phase": 5,
+        "name": "Audit & Integration",
+        "crates": ["ledge-sdk"],
+        "components": [
+          "WORM chain (append-only ledger)",
+          "Bifrost Bridge integration",
+          "Receipt cryptographic signing",
+          "Release readiness verification",
+          "Cross-language equivalence tests"
+        ],
+        "status": "in_progress"
+      }
+    ],
+
+    "logic_engine": {
+      "language": "Prolog/Datalog",
+      "lines_of_code": 2421,
+      "type": "source_of_truth",
+      "components": {
+        "facts": [
+          "agents.pl — 7 agents, 21 capabilities, trust tiers",
+          "runtimes.pl — 6 runtimes, operational constraints",
+          "notebook_cells.pl — 14-cell inventory",
+          "capabilities.pl — 6 capabilities, validity tracking",
+          "receipts.pl — 7-receipt WORM chain"
+        ],
+        "rules": [
+          "authorization.pl — dispatch_permitted/5 gate",
+          "transitions.pl — 8-stage protocol state machine",
+          "proofs.pl — 4 proof obligations",
+          "provenance.pl — receipt chain tracing",
+          "release.pl — release_ready/1 master query"
+        ],
+        "queries": [
+          "test_queries.pl — 13 test functions"
+        ]
+      },
+      "release_query": "release_ready(Result)",
+      "release_status": "ready"
+    }
+  },
+
+  "metrics": {
+    "total_lines_of_code": 8101,
+    "rust_lines": 5680,
+    "prolog_lines": 2421,
+    "tests_total": 82,
+    "tests_passing": 82,
+    "test_pass_rate": "100%",
+    "languages_supported": 30,
+    "proof_obligations_satisfied": 4,
+    "worm_receipt_chain_length": 7,
+    "committed_agents": ["loc", "ledger", "metatron", "forge", "sentinel"],
+    "capability_objects": 6,
+    "maximum_concurrent_cells": 8,
+    "default_timeout_ms": 30000
+  },
+
+  "deployment": {
+    "github": {
+      "repository": "https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook",
+      "main_branch": "main",
+      "docs_url": "https://snapkittywest.github.io/rowm-polymorphic-notebook"
+    },
+    "crates_io": {
+      "package": "rowm-polymorphic-notebook",
+      "version": "1.0.0",
+      "status": "ready_to_publish"
+    },
+    "docker": {
+      "image": "rowm:1.0.0",
+      "registry": "docker.io/snapkittywest"
+    }
+  },
+
+  "agent_integration": {
+    "metadata_format": "JSON",
+    "query_template": {
+      "query_types": [
+        "summarize_architecture",
+        "list_capabilities",
+        "verify_tests",
+        "check_release_readiness",
+        "analyze_phase"
+      ],
+      "example_queries": [
+        {
+          "type": "verify_tests",
+          "language": "rust",
+          "scope": "all_crates"
+        },
+        {
+          "type": "check_release_readiness",
+          "language": "prolog",
+          "query": "release_ready(Result)"
+        }
+      ]
+    },
+    "xml_query_template": "See METADATA.xml for XML-based agent queries"
+  },
+
+  "quality_assurance": {
+    "security": {
+      "worm_sealed": true,
+      "capability_model": true,
+      "proof_enforcement": true,
+      "rollback_on_violation": true,
+      "tamper_detection": true
+    },
+    "testing": {
+      "unit_tests": 82,
+      "integration_tests": 5,
+      "cross_language_tests": true,
+      "prolog_tests": 13,
+      "coverage": "comprehensive"
+    },
+    "documentation": {
+      "architecture_doc": "docs/ARCHITECTURE.md",
+      "protocol_doc": "docs/PROTOCOL.md",
+      "threat_model": "docs/THREAT_MODEL.md",
+      "api_reference": "docs/API_REFERENCE.md"
+    }
+  },
+
+  "build_commands": {
+    "build": "cargo build --release --workspace",
+    "test": "cargo test --all --lib",
+    "test_with_output": "cargo test --all --lib -- --nocapture",
+    "test_prolog": "swipl -f logic/queries/test_queries.pl -t run_tests",
+    "doc": "cargo doc --no-deps --open",
+    "lint": "cargo clippy --all --lib",
+    "format": "cargo fmt --all"
+  },
+
+  "licensing": {
+    "primary": "Apache-2.0",
+    "secondary": "MIT",
+    "choose_either": true,
+    "license_files": [
+      "LICENSE-APACHE2.txt",
+      "LICENSE-MIT.txt"
+    ]
+  },
+
+  "contact": {
+    "email": "jessica@collectivekitty.com",
+    "issues": "https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook/issues",
+    "discussions": "https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook/discussions"
+  }
+}
