@@ -82,14 +82,36 @@ class AhmadJITUI {
             // Check if WebLLM library is loaded
             if (!window.webllm) {
                 // Check if it's still loading
-                if (window.webllmCDNLoading) {
-                    this.addMessage('system', 'WebLLM library is still loading from CDN. Please wait a moment and try again.');
+                if (window.webllmCDNLoading || (window.webllmLoadTimestamp && Date.now() - window.webllmLoadTimestamp < 15000)) {
+                    const elapsed = window.webllmLoadTimestamp ? Math.round((Date.now() - window.webllmLoadTimestamp) / 1000) : '?';
+                    this.addMessage('system', `WebLLM library is still loading from CDN (${elapsed}s elapsed). Please wait a moment...`);
+                    this.addMessage('system', 'If this takes too long, try clicking the button again in a few seconds.');
                     this.elements.loadBtn.disabled = false;
                     return;
                 }
 
                 // Check for specific error
                 if (window.webllmError) {
+                    this.addMessage('system', `WebLLM failed to load: ${window.webllmError}`);
+                    this.addMessage('system', 'Trying to retry from backup CDN (unpkg)...');
+
+                    // Auto-retry from unpkg
+                    if (window.retryWebLLMLoad) {
+                        this.addMessage('system', '⟳ Retrying...');
+                        window.retryWebLLMLoad();
+
+                        // Wait a bit then try again
+                        this.elements.loadBtn.disabled = false;
+                        setTimeout(() => {
+                            if (window.webllm) {
+                                this.addMessage('system', '✓ Retry successful! Try loading the model again.');
+                            } else {
+                                this.addMessage('system', '✗ Retry failed. Check your internet connection.');
+                            }
+                        }, 5000);
+                        return;
+                    }
+
                     throw new Error(`WebLLM failed to load: ${window.webllmError}. Check your internet connection and try again.`);
                 }
 
@@ -252,6 +274,8 @@ function initializeAhmadUI() {
             // Check WebLLM status and log it
             if (window.webllm) {
                 console.log('WebLLM library detected:', typeof window.webllm);
+            } else if (window.webllmReady) {
+                console.log('WebLLM marked ready (loading complete)');
             } else if (window.webllmCDNLoading) {
                 console.warn('WebLLM still loading from CDN...');
             } else if (window.webllmError) {
@@ -267,14 +291,62 @@ function initializeAhmadUI() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeAhmadUI);
-} else {
+// Initialize UI when DOM is ready
+function startUIInitialization() {
+    // Always initialize UI immediately (even if CDN not ready)
     initializeAhmadUI();
+
+    // If WebLLM is ready, we're done
+    if (window.webllmReady) {
+        console.log('WebLLM already ready');
+        return;
+    }
+
+    // Otherwise, wait for WebLLM callback
+    if (window.onWebLLMReady) {
+        window.onWebLLMReady(function() {
+            console.log('WebLLM became ready, UI already initialized');
+        });
+    }
 }
 
-// Provide global hook for manual initialization if needed
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startUIInitialization);
+} else {
+    startUIInitialization();
+}
+
+// Provide global hooks for manual operations if needed
 window.initAhmadUI = initializeAhmadUI;
 
-// Also monitor WebLLM loading status
-console.log('Page ready. WebLLM CDN is loading...');
+// Add retry capability for CDN loading
+window.retryWebLLMLoad = function() {
+    console.log('Retrying WebLLM load from unpkg...');
+    if (window.webllm) {
+        console.log('WebLLM already loaded');
+        return;
+    }
+    window.webllmError = null;
+    window.webllmReady = false;
+    window.webllmCDNLoading = true;
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@mlc-ai/web-llm@0.2.32/dist/web-llm.js';
+    script.onload = function() {
+        window.webllmReady = true;
+        window.webllmCDNLoading = false;
+        console.log('WebLLM loaded from unpkg retry');
+        if (window.fireWebLLMCallbacks) window.fireWebLLMCallbacks();
+        if (window.ahmadJITUI) {
+            window.ahmadJITUI.addMessage('system', 'WebLLM loaded successfully!');
+        }
+    };
+    script.onerror = function() {
+        window.webllmError = 'unpkg retry failed';
+        window.webllmCDNLoading = false;
+        console.error('Retry failed');
+    };
+    document.head.appendChild(script);
+};
+
+console.log('Ahmad JIT UI scripts loaded. WebLLM CDN is loading...');
