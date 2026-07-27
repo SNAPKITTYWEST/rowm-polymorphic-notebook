@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sovereign Notebook — Verifiable computation in your browser">
+    <title>Ω Isomorphic WORM Notebook</title>
+    <link rel="stylesheet" href="styles/notebook.css">
+    <link rel="stylesheet" href="styles/jit-box.css">
+</head>
+<body>
+    <div id="notebook-container">
+        <!-- Header -->
+        <header id="notebook-header">
+            <div class="header-left">
+                <h1>Ω Isomorphic WORM Notebook</h1>
+                <p class="subtitle">Verifiable computation in your browser</p>
+            </div>
+            <div class="header-controls">
+                <button id="btn-run-all" class="btn btn-primary">Run All</button>
+                <button id="btn-export-receipt" class="btn btn-secondary">Export Receipt</button>
+                <button id="btn-settings" class="btn btn-tertiary">⚙</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="notebook-main">
+            <!-- Sidebar: Metadata + Dependencies -->
+            <aside id="notebook-sidebar">
+                <section id="metadata-browser">
+                    <h3>Notebook Metadata</h3>
+                    <div id="metadata-list"></div>
+                </section>
+                <section id="dependency-graph">
+                    <h3>Cell Dependencies</h3>
+                    <svg id="dependency-svg" width="200" height="200"></svg>
+                </section>
+                <section id="trust-policies">
+                    <h3>Trust Policies</h3>
+                    <div id="trust-list"></div>
+                </section>
+            </aside>
+
+            <!-- Cell Editor Area -->
+            <section id="notebook-cells">
+                <!-- Cells dynamically inserted here -->
+            </section>
+
+            <!-- WORM Ledger Browser -->
+            <aside id="ledger-panel">
+                <h3>WORM Receipt Chain</h3>
+                <div id="receipt-chain-view"></div>
+            </aside>
+        </main>
+
+        <!-- Footer: Status Bar -->
+        <footer id="notebook-footer">
+            <div id="status-text">Ready</div>
+            <div id="execution-stats">0 cells | 0 ms</div>
+        </footer>
+    </div>
+
+    <!-- JIT Chat Box (Floating) -->
+    <div id="jit-launcher" class="jit-launcher">
+        <button id="jit-toggle" class="jit-button" title="Open Ω JIT Assistant">Ω</button>
+        <div id="jit-progress-ring" class="jit-progress"></div>
+    </div>
+
+    <div id="jit-panel" class="jit-panel hidden">
+        <!-- JIT Header -->
+        <div class="jit-header">
+            <h2>Ω JIT Notebook Assistant</h2>
+            <div class="jit-status-bar">
+                <span id="jit-status" class="jit-status-badge">OFFLINE</span>
+                <div class="jit-controls">
+                    <button id="jit-minimize" class="jit-control-btn" title="Minimize">−</button>
+                    <button id="jit-close" class="jit-control-btn" title="Close">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- JIT Messages -->
+        <div id="jit-messages" class="jit-messages"></div>
+
+        <!-- JIT Composer -->
+        <div class="jit-composer">
+            <textarea id="jit-input" class="jit-input" placeholder="Ask about this notebook..." disabled></textarea>
+            <div class="jit-composer-controls">
+                <button id="jit-send" class="jit-btn-send" disabled>Send</button>
+                <button id="jit-stop" class="jit-btn-stop" disabled>Stop</button>
+                <button id="jit-clear" class="jit-btn-clear">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animation Engine (SVG Canvas) -->
+    <canvas id="animation-canvas" style="display: none;"></canvas>
+
+    <!-- Scripts -->
+    <script src="scripts/unicode-ir.js"></script>
+    <script src="scripts/worm-receipts.js"></script>
+    <script src="scripts/notebook-context.js"></script>
+    <script src="scripts/webllm-engine.js"></script>
+    <script src="scripts/jit-box.js"></script>
+    <script src="scripts/notebook-engine.js"></script>
+</body>
+</html>

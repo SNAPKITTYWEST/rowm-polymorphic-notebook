@@ -1,0 +1,382 @@
+/* ROWM Notebook — Main Stylesheet */
+
+:root {
+    --color-dark: #0a0e27;
+    --color-navy: #1a2654;
+    --color-cyan: #00d9ff;
+    --color-gold: #ffd700;
+    --color-magenta: #d946ef;
+    --color-text: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    --color-border: #2a3654;
+    --color-success: #10b981;
+    --color-error: #ef4444;
+
+    --font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--color-dark);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+/* LAYOUT: Grid */
+#notebook-container {
+    display: grid;
+    grid-template-rows: 60px 1fr 40px;
+    grid-template-columns: 250px 1fr 250px;
+    height: 100vh;
+    gap: 1px;
+    background: var(--color-border);
+}
+
+#notebook-header {
+    grid-column: 1 / -1;
+    background: var(--color-navy);
+    border-bottom: 1px solid var(--color-border);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#notebook-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+#notebook-header .subtitle {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 8px;
+}
+
+#notebook-main {
+    display: grid;
+    grid-template-columns: 250px 1fr 250px;
+    gap: 1px;
+    background: var(--color-border);
+}
+
+#notebook-sidebar {
+    background: var(--color-navy);
+    border-right: 1px solid var(--color-border);
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+#notebook-sidebar h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-cyan);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+#notebook-sidebar section {
+    margin-bottom: 16px;
+}
+
+#notebook-cells {
+    background: var(--color-dark);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+#ledger-panel {
+    background: var(--color-navy);
+    border-left: 1px solid var(--color-border);
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+#ledger-panel h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-gold);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+#notebook-footer {
+    grid-column: 1 / -1;
+    background: var(--color-navy);
+    border-top: 1px solid var(--color-border);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+/* CELLS */
+.notebook-cell {
+    background: var(--color-navy);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: box-shadow var(--transition-normal);
+}
+
+.notebook-cell:hover {
+    box-shadow: 0 0 16px rgba(0, 217, 255, 0.1);
+}
+
+.notebook-cell:focus-within {
+    box-shadow: 0 0 16px rgba(0, 217, 255, 0.2);
+    border-color: var(--color-cyan);
+}
+
+.cell-index {
+    background: var(--color-dark);
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+}
+
+.cell-editor {
+    padding: 12px;
+}
+
+.cell-editor textarea,
+.cell-editor input {
+    width: 100%;
+    background: var(--color-dark);
+    border: none;
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 8px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.cell-editor textarea:focus,
+.cell-editor input:focus {
+    outline: none;
+    background: rgba(0, 217, 255, 0.02);
+}
+
+.cell-output {
+    background: var(--color-dark);
+    border-top: 1px solid var(--color-border);
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cell-output.success {
+    border-left: 3px solid var(--color-success);
+}
+
+.cell-output.error {
+    border-left: 3px solid var(--color-error);
+    color: var(--color-error);
+}
+
+.cell-receipt {
+    background: rgba(255, 215, 0, 0.05);
+    border-top: 1px dashed var(--color-gold);
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--color-gold);
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.cell-receipt:hover {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* BUTTONS */
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-primary {
+    background: var(--color-cyan);
+    color: var(--color-dark);
+    border-color: var(--color-cyan);
+}
+
+.btn-primary:hover {
+    background: rgba(0, 217, 255, 0.9);
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-border);
+    border-color: var(--color-cyan);
+}
+
+.btn-tertiary {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    padding: 8px 12px;
+}
+
+.btn-tertiary:hover {
+    color: var(--color-cyan);
+}
+
+/* DEPENDENCY GRAPH */
+#dependency-svg {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: rgba(10, 14, 39, 0.5);
+}
+
+#dependency-svg line {
+    stroke: var(--color-cyan);
+    stroke-width: 1;
+    opacity: 0.5;
+}
+
+#dependency-svg circle {
+    fill: var(--color-navy);
+    stroke: var(--color-cyan);
+    stroke-width: 1;
+}
+
+#dependency-svg text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--color-text-secondary);
+    text-anchor: middle;
+}
+
+/* METADATA LIST */
+#metadata-list, #trust-list, #receipt-chain-view {
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+#metadata-list div, #trust-list div, #receipt-chain-view div {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+}
+
+#metadata-list span, #trust-list span, #receipt-chain-view span {
+    color: var(--color-cyan);
+    font-weight: 500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1400px) {
+    #notebook-container {
+        grid-template-columns: 200px 1fr 200px;
+    }
+}
+
+@media (max-width: 1000px) {
+    #notebook-container {
+        grid-template-columns: 1fr;
+    }
+
+    #notebook-sidebar,
+    #ledger-panel {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    #notebook-header {
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    #notebook-header h1 {
+        font-size: 16px;
+    }
+
+    .header-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    #notebook-cells {
+        padding: 12px;
+    }
+
+    .notebook-cell {
+        margin-bottom: 8px;
+    }
+}
+
+/* REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* SCROLLBARS */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-cyan);
+}
