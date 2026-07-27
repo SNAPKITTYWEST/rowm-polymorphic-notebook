@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Isomorphic Shift Intermediate Representation (ISIR)",
+  "description": "Canonical intermediate form for all isomorphic shifts",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "shift_id",
+    "shift_version",
+    "source_domain",
+    "target_domain",
+    "direction",
+    "value_type",
+    "payload",
+    "invariant_set",
+    "required_permission",
+    "source_hash",
+    "canonical_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version of ISIR schema (current: 1)"
+    },
+    "shift_id": {
+      "type": "string",
+      "pattern": "^(M[1-8]|custom_[a-zA-Z0-9_]+)$",
+      "description": "Unique identifier of the shift (M1-M8 or custom)"
+    },
+    "shift_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version of this specific shift implementation"
+    },
+    "source_domain": {
+      "type": "string",
+      "enum": [
+        "SurfaceInstruction",
+        "CanonicalInstruction",
+        "LogicTerm",
+        "AuthorizedLogicDecision",
+        "RuntimeCommand",
+        "ProofObligation",
+        "VerifierInvocation",
+        "ExecutionEvent",
+        "LogicEventFact",
+        "ReceiptRecord",
+        "NotebookCellRecord",
+        "LogicCellFact",
+        "RuntimeSpecificValue",
+        "CanonicalValue"
+      ],
+      "description": "Domain of transformation origin"
+    },
+    "target_domain": {
+      "type": "string",
+      "enum": [
+        "SurfaceInstruction",
+        "CanonicalInstruction",
+        "LogicTerm",
+        "AuthorizedLogicDecision",
+        "RuntimeCommand",
+        "ProofObligation",
+        "VerifierInvocation",
+        "ExecutionEvent",
+        "LogicEventFact",
+        "ReceiptRecord",
+        "NotebookCellRecord",
+        "LogicCellFact",
+        "RuntimeSpecificValue",
+        "CanonicalValue"
+      ],
+      "description": "Domain of transformation destination"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["forward", "inverse", "bidirectional"],
+      "description": "Direction of this transformation"
+    },
+    "value_type": {
+      "type": "string",
+      "enum": [
+        "instruction",
+        "decision",
+        "command",
+        "event",
+        "proof",
+        "receipt",
+        "value",
+        "fact",
+        "cell"
+      ],
+      "description": "Semantic category of the payload"
+    },
+    "payload": {
+      "type": "string",
+      "format": "binary",
+      "description": "CBOR-encoded (deterministic, canonical) representation of the transformed value"
+    },
+    "invariant_set": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "category"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Invariant identifier (e.g., 'verb_identity')"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "semantic_preservation",
+              "type_preservation",
+              "authority_preservation",
+              "structure_preservation",
+              "causality_preservation",
+              "immutability"
+            ],
+            "description": "Category of invariant"
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether this invariant was verified in this shift"
+          }
+        }
+      },
+      "description": "List of invariants preserved by this shift"
+    },
+    "required_permission": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write",
+        "execute",
+        "seal",
+        "analyze",
+        "generate",
+        "verify",
+        "admin"
+      ],
+      "description": "Minimum permission required to perform this shift"
+    },
+    "source_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Blake3 hash of source before transformation"
+    },
+    "canonical_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Blake3 hash of canonical representation (deterministic)"
+    },
+    "parent_receipt_hash": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$|^null$",
+      "description": "Blake3 hash of parent receipt (for causality chain)"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "integer",
+          "description": "Unix seconds when transformation occurred"
+        },
+        "agent": {
+          "type": "string",
+          "description": "Agent identifier that performed transformation"
+        },
+        "adapter_version": {
+          "type": "string",
+          "description": "Version of adapter that performed transformation"
+        },
+        "prolog_query_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Hash of Prolog authorization query result"
+        },
+        "round_trip_verified": {
+          "type": "boolean",
+          "description": "Whether round-trip (forward→inverse or inverse→forward) was verified"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "MALFORMED_SOURCE",
+            "UNKNOWN_SHIFT",
+            "UNSUPPORTED_VERSION",
+            "INCOMPATIBLE_SCHEMA",
+            "AMBIGUOUS_MAPPING",
+            "LOSSY_MAPPING",
+            "INVALID_INVERSE",
+            "MISSING_ADAPTER",
+            "TIMEOUT",
+            "AUTHORIZATION_DENIED",
+            "INVARIANT_VIOLATION",
+            "SEMANTIC_MISMATCH"
+          ],
+          "description": "Error classification"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "detail": {
+          "type": "object",
+          "description": "Additional error details"
+        }
+      },
+      "description": "Error details if shift failed (mutually exclusive with payload)"
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["payload"],
+      "not": { "required": ["error"] }
+    },
+    {
+      "required": ["error"],
+      "not": { "required": ["payload"] }
+    }
+  ]
+}
