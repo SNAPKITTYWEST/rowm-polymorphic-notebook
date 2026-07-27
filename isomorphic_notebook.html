@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Isomorphic Unicode Notebook</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #050816;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .iso-notebook {
+      --panel: #070b1e;
+      --surface: #101735;
+      --surface-2: #151e43;
+      --cyan: #7ef9ff;
+      --pink: #ff79dc;
+      --gold: #ffd86b;
+      --text: #eef8ff;
+      --muted: #94a4c8;
+      --border: #304577;
+
+      max-width: 1100px;
+      margin: 24px auto;
+      border: 2px solid var(--cyan);
+      border-radius: 24px;
+      overflow: hidden;
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .iso-toolbar,
+    .iso-status,
+    .cell-head,
+    .cell-flow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .iso-toolbar {
+      justify-content: space-between;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .iso-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .iso-notebook button {
+      border: 1px solid var(--cyan);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: var(--text);
+      background: var(--surface);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .iso-notebook button:hover {
+      background: var(--surface-2);
+    }
+
+    .iso-status {
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 10px 18px;
+      color: var(--cyan);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    #cellStack {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .iso-cell {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .iso-cell.running {
+      border-color: var(--cyan);
+      box-shadow: 0 0 24px rgb(126 249 255 / 18%);
+      transform: translateY(-2px);
+    }
+
+    .iso-cell.reversing {
+      border-color: var(--pink);
+    }
+
+    .iso-cell.sealed {
+      border-color: var(--gold);
+    }
+
+    .iso-cell::before {
+      position: absolute;
+      inset: 0 auto 0 -20%;
+      width: 18%;
+      content: "";
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgb(126 249 255 / 18%), transparent);
+      opacity: 0;
+    }
+
+    .iso-cell.running::before {
+      opacity: 1;
+      animation: cell-scan 1.1s linear infinite;
+    }
+
+    @keyframes cell-scan {
+      from { left: -20%; }
+      to { left: 110%; }
+    }
+
+    .cell-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cell-index {
+      color: var(--cyan);
+    }
+
+    .cell-state {
+      margin-right: auto;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .cell-source {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 130px;
+      resize: vertical;
+      border: 0;
+      padding: 16px;
+      outline: none;
+      color: var(--text);
+      background: #090f26;
+      font: inherit;
+      line-height: 1.55;
+    }
+
+    .cell-flow {
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 9px;
+      color: var(--muted);
+      border-block: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .flow-arrow {
+      color: var(--gold);
+      transition: transform 250ms ease;
+    }
+
+    .iso-cell.reversing .flow-arrow {
+      color: var(--pink);
+      transform: rotate(180deg);
+    }
+
+    .cell-output {
+      min-height: 80px;
+      margin: 0;
+      padding: 16px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      color: var(--cyan);
+      background: #060a19;
+      font-size: 12px;
+    }
+
+    .cell-receipt {
+      padding: 10px 14px;
+      overflow-wrap: anywhere;
+      color: var(--gold);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+    }
+
+    @media (max-width: 650px) {
+      .iso-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .cell-head {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="iso-notebook" id="isoNotebook">
+    <header class="iso-toolbar">
+      <strong>ISOMORPHIC UNICODE NOTEBOOK</strong>
+      <div class="iso-actions">
+        <button type="button" data-action="run">▶ Run</button>
+        <button type="button" data-action="reverse">⇄ Reverse</button>
+        <button type="button" data-action="add">＋ Cell</button>
+        <button type="button" data-action="seal">Ω Seal</button>
+      </div>
+    </header>
+
+    <div class="iso-status">
+      <span id="engineState">ENGINE: READY</span>
+      <span id="directionState">DIRECTION: FORWARD</span>
+      <span id="receiptState">RECEIPT: UNSEALED</span>
+    </div>
+
+    <main id="cellStack"></main>
+
+    <template id="cellTemplate">
+      <article class="iso-cell">
+        <div class="cell-head">
+          <span class="cell-index"></span>
+          <span class="cell-state">READY</span>
+          <button type="button" class="cell-run">RUN</button>
+          <button type="button" class="cell-reverse">REVERSE</button>
+        </div>
+        <textarea class="cell-source" spellcheck="false" aria-label="Unicode notebook cell"></textarea>
+        <div class="cell-flow" aria-hidden="true">
+          <span>SOURCE</span>
+          <span class="flow-arrow">→</span>
+          <span>UNICODE IR</span>
+          <span class="flow-arrow">→</span>
+          <span>REVERSE</span>
+        </div>
+        <pre class="cell-output"></pre>
+        <footer class="cell-receipt"></footer>
+      </article>
+    </template>
+  </section>
+
+  <script type="module">
+    class IsomorphicUnicodeEngine {
+      constructor(root) {
+        this.root = root;
+        this.stack = root.querySelector("#cellStack");
+        this.template = root.querySelector("#cellTemplate");
+        this.engineState = root.querySelector("#engineState");
+        this.directionState = root.querySelector("#directionState");
+        this.receiptState = root.querySelector("#receiptState");
+        this.direction = "forward";
+        this.receipts = [];
+        this.frame = 0;
+        this.lastTime = 0;
+        this.encoder = new TextEncoder();
+        this.decoder = new TextDecoder("utf-8", { fatal: true });
+
+        this.bindToolbar();
+        this.addCell(["λ x → Ω(x)", "WORM ⇄ ROWM", "𐤀 ꙮ ⌬ ∞ ↶ ⇄ ⟁", "Evidence or Silence"].join("\n"));
+        requestAnimationFrame((time) => this.animate(time));
+      }
+
+      bindToolbar() {
+        this.root.querySelector('[data-action="run"]').addEventListener("click", () => this.runAll());
+        this.root.querySelector('[data-action="reverse"]').addEventListener("click", () => this.reverseAll());
+        this.root.querySelector('[data-action="add"]').addEventListener("click", () => this.addCell(""));
+        this.root.querySelector('[data-action="seal"]').addEventListener("click", () => this.sealAll());
+      }
+
+      addCell(source = "") {
+        const fragment = this.template.content.cloneNode(true);
+        const cell = fragment.querySelector(".iso-cell");
+        const textarea = fragment.querySelector(".cell-source");
+        textarea.value = source;
+        fragment.querySelector(".cell-run").addEventListener("click", () => this.runCell(cell));
+        fragment.querySelector(".cell-reverse").addEventListener("click", () => this.reverseCell(cell));
+        this.stack.appendChild(fragment);
+        this.reindexCells();
+      }
+
+      reindexCells() {
+        [...this.stack.querySelectorAll(".iso-cell")].forEach((cell, index) => {
+          cell.dataset.cellId = String(index + 1);
+          cell.querySelector(".cell-index").textContent = `CELL [${String(index + 1).padStart(3, "0")}]`;
+        });
+      }
+
+      normalizeUnicode(value) {
+        return value.replace(/\r\n?/g, "\n").normalize("NFC");
+      }
+
+      toUnicodeIR(value) {
+        const canonical = this.normalizeUnicode(value);
+        const codePoints = Array.from(canonical, (symbol) =>
+          `U+${symbol.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}`
+        );
+        return {
+          version: "unicode-ir/1",
+          normalization: "NFC",
+          direction: "forward",
+          codePoints,
+          utf8: Array.from(this.encoder.encode(canonical)),
+          canonical
+        };
+      }
+
+      fromUnicodeIR(ir) {
+        if (!ir || ir.version !== "unicode-ir/1") throw new Error("Unsupported Unicode IR");
+        const reconstructed = ir.codePoints.map((entry) => {
+          if (!/^U\+[0-9A-F]{4,6}$/u.test(entry)) throw new Error(`Invalid code point: ${entry}`);
+          return String.fromCodePoint(Number.parseInt(entry.slice(2), 16));
+        }).join("");
+        const decodedUtf8 = this.decoder.decode(Uint8Array.from(ir.utf8));
+        if (reconstructed !== decodedUtf8) throw new Error("Unicode IR representations disagree");
+        return reconstructed.normalize(ir.normalization);
+      }
+
+      async runCell(cell) {
+        const source = cell.querySelector(".cell-source").value;
+        const output = cell.querySelector(".cell-output");
+        this.setCellState(cell, "running", "ENCODING");
+        this.engineState.textContent = "ENGINE: EXECUTING";
+        this.direction = "forward";
+        this.updateDirection();
+        await this.delay(260);
+        try {
+          const ir = this.toUnicodeIR(source);
+          cell.dataset.ir = JSON.stringify(ir);
+          output.textContent = JSON.stringify(ir, null, 2);
+          this.setCellState(cell, "", "FORWARD VERIFIED");
+        } catch (error) {
+          this.setCellState(cell, "", `ERROR: ${error.message}`);
+        }
+        this.engineState.textContent = "ENGINE: READY";
+      }
+
+      async reverseCell(cell) {
+        const output = cell.querySelector(".cell-output");
+        this.setCellState(cell, "reversing", "REVERSING");
+        this.engineState.textContent = "ENGINE: REVERSING";
+        this.direction = "reverse";
+        this.updateDirection();
+        await this.delay(260);
+        try {
+          const ir = cell.dataset.ir ? JSON.parse(cell.dataset.ir) : this.toUnicodeIR(cell.querySelector(".cell-source").value);
+          const restored = this.fromUnicodeIR(ir);
+          const expected = this.normalizeUnicode(cell.querySelector(".cell-source").value);
+          if (restored !== expected) throw new Error("Round-trip invariant failed");
+          output.textContent = restored;
+          this.setCellState(cell, "", "ROUND TRIP VERIFIED");
+        } catch (error) {
+          this.setCellState(cell, "", `ERROR: ${error.message}`);
+        }
+        this.engineState.textContent = "ENGINE: READY";
+      }
+
+      async runAll() {
+        for (const cell of this.stack.querySelectorAll(".iso-cell")) {
+          await this.runCell(cell);
+        }
+      }
+
+      async reverseAll() {
+        for (const cell of this.stack.querySelectorAll(".iso-cell")) {
+          await this.reverseCell(cell);
+        }
+      }
+
+      async sealAll() {
+        this.receiptState.textContent = "RECEIPT: SEALING";
+        for (const cell of this.stack.querySelectorAll(".iso-cell")) {
+          await this.sealCell(cell);
+        }
+        this.receiptState.textContent = `RECEIPT: ${this.receipts.length} SEALED`;
+      }
+
+      async sealCell(cell) {
+        const source = this.normalizeUnicode(cell.querySelector(".cell-source").value);
+        const ir = this.toUnicodeIR(source);
+        const canonicalPayload = JSON.stringify({
+          protocol: "isomorphic-cell/1",
+          cell: Number(cell.dataset.cellId),
+          normalization: ir.normalization,
+          codePoints: ir.codePoints,
+          utf8: ir.utf8
+        });
+        const hash = await this.sha512(canonicalPayload);
+        const receipt = Object.freeze({
+          sequence: this.receipts.length + 1,
+          cell: Number(cell.dataset.cellId),
+          algorithm: "SHA-512",
+          digest: hash,
+          previousDigest: this.receipts.at(-1)?.digest ?? "GENESIS",
+          timestampMetadata: new Date().toISOString()
+        });
+        this.receipts.push(receipt);
+        cell.classList.add("sealed");
+        cell.querySelector(".cell-state").textContent = "SEALED";
+        cell.querySelector(".cell-receipt").textContent = `Ω ${receipt.algorithm} · ${receipt.digest}`;
+      }
+
+      async sha512(value) {
+        if (!globalThis.crypto?.subtle) throw new Error("Web Crypto SHA-512 unavailable");
+        const digest = await crypto.subtle.digest("SHA-512", this.encoder.encode(value));
+        return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
+
+      setCellState(cell, mode, label) {
+        cell.classList.remove("running", "reversing");
+        if (mode) cell.classList.add(mode);
+        cell.querySelector(".cell-state").textContent = label;
+      }
+
+      updateDirection() {
+        this.directionState.textContent = `DIRECTION: ${this.direction.toUpperCase()}`;
+      }
+
+      animate(time) {
+        const delta = time - this.lastTime;
+        if (delta >= 40) {
+          this.frame += 1;
+          this.lastTime = time;
+          this.stack.querySelectorAll(".flow-arrow").forEach((arrow, index) => {
+            const active = (this.frame + index * 3) % 18 < 7;
+            arrow.style.opacity = active ? "1" : "0.35";
+          });
+        }
+        requestAnimationFrame((nextTime) => this.animate(nextTime));
+      }
+
+      delay(milliseconds) {
+        return new Promise((resolve) => setTimeout(resolve, milliseconds));
+      }
+    }
+
+    new IsomorphicUnicodeEngine(document.querySelector("#isoNotebook"));
+  </script>
+</body>
+</html>
