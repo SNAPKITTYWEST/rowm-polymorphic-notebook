@@ -1,0 +1,99 @@
+<svg viewBox="0 0 1389 860" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>
+      .header-text { font-family: monospace; font-size: 24px; font-weight: bold; fill: #00ff00; }
+      .subheader { font-family: monospace; font-size: 16px; fill: #ffaa00; letter-spacing: 2px; }
+      .math-text { font-family: monospace; font-size: 14px; fill: #88ccff; }
+      .label-text { font-family: monospace; font-size: 12px; fill: #cccccc; }
+      .glow { filter: drop-shadow(0 0 8px #00ff00); }
+      .glow-pink { filter: drop-shadow(0 0 8px #ff00ff); }
+      .glow-gold { filter: drop-shadow(0 0 10px #ffaa00); }
+    </style>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="1389" height="860" fill="#0a0f2e"/>
+
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a3a4a" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1389" height="860" fill="url(#grid)"/>
+
+  <!-- Top header -->
+  <text x="50" y="50" class="header-text">ISOMORPHIC SHIFT // WORM CONTAINER</text>
+  <text x="1150" y="50" class="subheader" text-anchor="end">REVERSIBLE · UNICODED · SEALED</text>
+
+  <!-- Outer container border -->
+  <rect x="100" y="90" width="1200" height="650" fill="none" stroke="#00ffff" stroke-width="3" rx="20"/>
+  <rect x="105" y="95" width="1190" height="640" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="10,10" rx="20" opacity="0.6"/>
+
+  <!-- Left bind circle (A) - cyan -->
+  <circle cx="220" cy="400" r="80" fill="none" stroke="#00ffff" stroke-width="3"/>
+  <circle cx="220" cy="400" r="75" fill="none" stroke="#00ffff" stroke-width="1" stroke-dasharray="5,5" filter="url(#glow)"/>
+  <circle cx="220" cy="400" r="15" fill="#00ffff" filter="url(#glow)"/>
+
+  <!-- Right bind circle (B) - magenta/gold -->
+  <circle cx="1170" cy="400" r="80" fill="none" stroke="#ff00ff" stroke-width="3"/>
+  <circle cx="1170" cy="400" r="75" fill="none" stroke="#ffaa00" stroke-width="1" stroke-dasharray="5,5" filter="url(#glow)"/>
+  <circle cx="1170" cy="400" r="15" fill="#ff00ff" filter="url(#glow)"/>
+
+  <!-- Top flow symbols -->
+  <text x="400" y="150" class="math-text" font-size="20" letter-spacing="8">∘  ↑  ⟂  Ω  ∴  ∩  φ  Σ  ◇  ∧  ⊕  ※  ◉  ⊗  ✵  ⊙</text>
+
+  <!-- Book/page shape in center -->
+  <g transform="translate(450, 250)">
+    <!-- Left page -->
+    <path d="M 0 0 L 150 0 L 200 50 L 200 350 L 0 350 Z" fill="#f5f5f5" stroke="#ffaa00" stroke-width="2"/>
+    <line x1="0" y1="0" x2="150" y2="0" stroke="#ffaa00" stroke-width="2"/>
+    <line x1="150" y1="0" x2="200" y2="50" stroke="#ffaa00" stroke-width="2"/>
+
+    <!-- Right page -->
+    <path d="M 200 50 L 350 50 L 350 350 L 200 350 Z" fill="#e8e8e8" stroke="#ffaa00" stroke-width="2"/>
+
+    <!-- Spine -->
+    <line x1="200" y1="50" x2="200" y2="350" stroke="#ffaa00" stroke-width="3"/>
+  </g>
+
+  <!-- Left page content -->
+  <text x="480" y="310" class="math-text" font-size="12">A ⇌ B :</text>
+  <text x="480" y="335" class="math-text" font-size="12">f⁻¹(f(x)) = canon(x)</text>
+  <text x="480" y="365" class="math-text" font-size="12">meaning(x) ≡ meaning(f(x))</text>
+  <text x="480" y="395" class="math-text" font-size="12">ROWM ⟺ WORM</text>
+  <text x="480" y="425" class="math-text" font-size="12">WRITE ONCE · READ MANY</text>
+
+  <!-- Right page content -->
+  <text x="720" y="310" class="label-text" font-size="11">SHA-512 :</text>
+  <text x="720" y="330" class="label-text" font-size="11">DIGEST</text>
+  <text x="720" y="360" class="label-text" font-size="11">Ed25519</text>
+  <text x="720" y="380" class="label-text" font-size="11">PUBLIC VERIFY</text>
+  <text x="720" y="410" class="label-text" font-size="11">MERKLE(ROOT(PAGES))</text>
+  <text x="720" y="440" class="label-text" font-size="11">PROLOG ⟺ DATALOG ⟺</text>
+
+  <!-- Connection curves -->
+  <path d="M 300 300 Q 600 200, 850 300" fill="none" stroke="#ffaa00" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M 300 500 Q 600 600, 850 500" fill="none" stroke="#ff00ff" stroke-width="2" stroke-dasharray="5,5"/>
+
+  <!-- Central seal (Omega circle) -->
+  <circle cx="1000" cy="500" r="90" fill="none" stroke="#ffaa00" stroke-width="3" filter="url(#glow)"/>
+  <circle cx="1000" cy="500" r="85" fill="none" stroke="#ffaa00" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  <text x="1000" y="510" class="header-text" text-anchor="middle" font-size="36">Ω</text>
+  <text x="1000" y="540" class="label-text" text-anchor="middle" font-size="10">CRYPTOGRAPHICALLY</text>
+  <text x="1000" y="555" class="label-text" text-anchor="middle" font-size="10">STAMPED</text>
+
+  <!-- Bottom footer -->
+  <line x1="100" y1="780" x2="1300" y2="780" stroke="#00ffff" stroke-width="2"/>
+  <text x="120" y="810" class="math-text" font-size="13">WORM ⇌ ROWM</text>
+  <text x="350" y="810" class="label-text" font-size="13">WRITE ONCE · READ MANY</text>
+  <text x="1000" y="810" class="subheader" text-anchor="middle" font-size="14">f⁻¹(f(x)) = canonical(x)</text>
+  <text x="1280" y="810" class="header-text" text-anchor="end" font-size="14">EVIDENCE OR SILENCE</text>
+</svg>

@@ -23,33 +23,12 @@ Rather than acting as a traditional notebook, it coordinates formal verification
 
 ## 🔮 Isomorphic Shift — WORM Container
 
-![ROWM Isomorphic WORM Container](https://img.shields.io/badge/REVERSIBLE%20%E2%80%A2%20UNICODED%20%E2%80%A2%20SEALED-00ff00?style=flat-square)
-
-```
-╔════════════════════════════════════════════════════════════════════════╗
-║  ISOMORPHIC SHIFT // WORM CONTAINER                                   ║
-║  [REVERSIBLE · UNICODED · SEALED]                                     ║
-║                                                                        ║
-║  Left Bind (A):  Knowledge Engine         Right Bind (B):  Proof     ║
-║  ─────────────────────────────────────────────────────────────────    ║
-║   ∘ ↑ ⟂ Ω ∴ ∩ φ Σ ◇ ∧ ⊕ ※ ◉ ⊗ ✵ ⊙ ∿ ∼ ∬ ⟡ ◊ ⊘             │
-║                                                                    │
-║  meaning(x) ≡ meaning(f(x))     f⁻¹(f(x)) = canon(x)            │
-║  ROWM ⟺ WORM                    SHA-512 DIGEST                  │
-║  WRITE ONCE · READ MANY         Ed25519 PUBLIC VERIFY           │
-║                                 MERKLE(ROOT(PAGES))             │
-║  PROLOG ⟺ DATALOG ⟺ SUBLEQ    CRYPTOGRAPHICALLY STAMPED        │
-║                                                                │
-║                           Ω  [EVIDENCE OR SILENCE]            │
-║────────────────────────────────────────────────────────────────
-║ WORM ⟷ ROWM           WRITE ONCE · READ MANY
-║ f⁻¹(f(x)) = canonical(x)                    EVIDENCE OR SILENCE
-```
+![ROWM Isomorphic WORM Container](WORM_CONTAINER.svg)
 
 **Core Properties:**
-- ✅ **Reversible:** Isomorphic mapping between execution and proof
-- ✅ **Unicoded:** Mathematical symbols ⟺ executable bytecode
-- ✅ **Sealed:** Cryptographically authenticated via Ed25519 + SHA-512
+- ✅ **Reversible:** Isomorphic mapping between execution and proof (A ⟺ B)
+- ✅ **Unicoded:** Mathematical symbols ⟺ executable bytecode  
+- ✅ **Sealed:** Cryptographically authenticated via Ed25519 + SHA-512 (Ω seal)
 - ✅ **WORM:** Write-Once-Read-Many immutability + Merkle tree integrity
 - ✅ **Evidence-Complete:** Proof obligations discharged or audit fails
 
