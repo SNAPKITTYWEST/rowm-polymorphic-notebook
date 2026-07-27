@@ -3,10 +3,12 @@
 
 pub mod orchestrator;
 pub mod receipt;
+pub mod receipt_v2;
 pub mod instruction;
 pub mod stage;
 
 pub use orchestrator::Orchestrator;
 pub use receipt::{Receipt, ReceiptChain};
+pub use receipt_v2::{ReceiptV2, ReceiptChainV2, ReceiptStatus, PerformanceMetrics};
 pub use instruction::Instruction;
 pub use stage::Stage;
