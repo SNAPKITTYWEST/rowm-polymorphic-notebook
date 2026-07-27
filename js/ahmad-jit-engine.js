@@ -16,26 +16,40 @@ class AhmadJITEngine {
         try {
             this.state = 'CHECKING_WEBGPU';
             if (!navigator.gpu) {
-                console.warn('WebGPU not available, will use CPU');
+                console.warn('WebGPU not available, will use CPU (10-20x slower)');
+            } else {
+                console.log('WebGPU available for acceleration');
             }
 
             this.state = 'LOADING';
             const webllm = window.webllm;
             if (!webllm) {
-                throw new Error('WebLLM library not loaded. Ensure https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.32/dist/web-llm.js is loaded');
+                // Provide detailed error info
+                const errorDetails = [];
+                errorDetails.push('WebLLM library not loaded');
+                if (window.webllmError) errorDetails.push(`Reason: ${window.webllmError}`);
+                if (window.webllmCDNLoading) errorDetails.push('CDN is still loading, please wait');
+                const fullError = errorDetails.join(' | ');
+                throw new Error(fullError);
             }
+
+            // Log WebLLM version info
+            console.log('WebLLM detected. Version:', window.webllm.version || 'unknown');
 
             // WebLLM 0.2.32 uses new MLCEngine()
             if (typeof webllm.MLCEngine !== 'function') {
-                throw new Error('WebLLM MLCEngine not available. Check CDN script load');
+                throw new Error('WebLLM MLCEngine not available. Loaded script may be corrupted.');
             }
 
             // Initialize MLCEngine (no constructor params needed for 0.2.32)
             this.engine = new webllm.MLCEngine();
+            console.log('MLCEngine created successfully');
 
             // Load the model (this is async and downloads weights)
             try {
+                console.log(`Downloading model: ${modelId}`);
                 await this.engine.reload(modelId);
+                console.log(`Model loaded: ${modelId}`);
             } catch (reloadError) {
                 console.error('Model reload failed:', reloadError);
                 throw new Error(`Failed to load model ${modelId}: ${reloadError.message}`);

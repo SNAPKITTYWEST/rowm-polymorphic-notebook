@@ -65,8 +65,54 @@
     <!-- Animation Engine (SVG Canvas) -->
     <canvas id="animation-canvas" style="display: none;"></canvas>
 
-    <!-- WebLLM Library (Real Model Inference) -->
-    <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.32/dist/web-llm.js"></script>
+    <!-- WebLLM Library (Real Model Inference) - with fallback CDNs -->
+    <script>
+        // Initialize CDN loading with fallbacks
+        window.webllmCDNLoading = true;
+        window.webllmReady = false;
+
+        // Store error info
+        window.webllmError = null;
+    </script>
+
+    <!-- Primary CDN: jsDelivr -->
+    <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.32/dist/web-llm.js"
+            onload="window.webllmReady = true; window.webllmCDNLoading = false; console.log('WebLLM loaded from jsDelivr');"
+            onerror="window.webllmError = 'jsDelivr failed'; loadWebLLMFallback();">
+    </script>
+
+    <!-- Fallback CDN Loader -->
+    <script>
+        function loadWebLLMFallback() {
+            if (window.webllm) {
+                console.log('WebLLM already loaded');
+                window.webllmReady = true;
+                window.webllmCDNLoading = false;
+                return;
+            }
+
+            console.warn('jsDelivr failed, trying unpkg...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@mlc-ai/web-llm@0.2.32/dist/web-llm.js';
+            script.onload = function() {
+                window.webllmReady = true;
+                window.webllmCDNLoading = false;
+                console.log('WebLLM loaded from unpkg');
+                // Trigger UI initialization if needed
+                if (window.initAhmadUI) window.initAhmadUI();
+            };
+            script.onerror = function() {
+                window.webllmError = 'All CDNs failed (jsDelivr, unpkg)';
+                window.webllmCDNLoading = false;
+                console.error('Failed to load WebLLM from any CDN');
+                // Show error to user
+                if (window.ahmadJITUI) {
+                    window.ahmadJITUI.addMessage('system', 'ERROR: Failed to load WebLLM library. Check internet connection or try again.');
+                }
+            };
+            document.head.appendChild(script);
+        }
+    </script>
 
     <!-- Ahmad Bot JIT Engine -->
     <script src="./js/ahmad-jit-engine.js"></script>

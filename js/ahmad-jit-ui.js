@@ -79,6 +79,23 @@ class AhmadJITUI {
 
     async loadModel() {
         try {
+            // Check if WebLLM library is loaded
+            if (!window.webllm) {
+                // Check if it's still loading
+                if (window.webllmCDNLoading) {
+                    this.addMessage('system', 'WebLLM library is still loading from CDN. Please wait a moment and try again.');
+                    this.elements.loadBtn.disabled = false;
+                    return;
+                }
+
+                // Check for specific error
+                if (window.webllmError) {
+                    throw new Error(`WebLLM failed to load: ${window.webllmError}. Check your internet connection and try again.`);
+                }
+
+                throw new Error('WebLLM library not available. Ensure index-app.html includes WebLLM CDN script.');
+            }
+
             this.elements.loadBtn.disabled = true;
             this.updateStatus('LOADING');
             this.addMessage('system', 'Initializing WebLLM engine and downloading model (500MB+)...');
@@ -225,12 +242,23 @@ class AhmadJITUI {
     }
 }
 
-// Auto-initialize on load
+// Auto-initialize on load (with WebLLM readiness check)
 function initializeAhmadUI() {
     try {
         if (typeof AhmadJITUI !== 'undefined') {
             window.ahmadJITUI = new AhmadJITUI();
             console.log('Ahmad JIT UI initialized successfully');
+
+            // Check WebLLM status and log it
+            if (window.webllm) {
+                console.log('WebLLM library detected:', typeof window.webllm);
+            } else if (window.webllmCDNLoading) {
+                console.warn('WebLLM still loading from CDN...');
+            } else if (window.webllmError) {
+                console.error('WebLLM load error:', window.webllmError);
+            } else {
+                console.warn('WebLLM not loaded and no error recorded. CDN may have failed silently.');
+            }
         } else {
             console.error('AhmadJITUI class not found');
         }
@@ -247,3 +275,6 @@ if (document.readyState === 'loading') {
 
 // Provide global hook for manual initialization if needed
 window.initAhmadUI = initializeAhmadUI;
+
+// Also monitor WebLLM loading status
+console.log('Page ready. WebLLM CDN is loading...');
