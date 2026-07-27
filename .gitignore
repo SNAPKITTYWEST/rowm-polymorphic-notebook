@@ -54,3 +54,6 @@ target/
 *.tmp
 *.temp
 .cache/
+
+# HTML (interactive notebooks - keep language metrics pure)
+*.html
