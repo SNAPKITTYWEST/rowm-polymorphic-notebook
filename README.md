@@ -20,7 +20,11 @@ Rather than acting as a traditional notebook, it coordinates formal verification
 
 ## 🔮 Isomorphic Shift — WORM Container
 
-![ROWM Isomorphic WORM Container](WORM_CONTAINER.svg)
+<img
+  src="./isomorphic_worm_cryptographic_notebook.svg"
+  alt="Animated Isomorphic WORM cryptographic notebook"
+  width="1600"
+/>
 
 **Core Properties:**
 - ✅ **Reversible:** Isomorphic mapping between execution and proof (A ⟺ B)
