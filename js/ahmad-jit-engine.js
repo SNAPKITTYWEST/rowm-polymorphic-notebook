@@ -25,9 +25,15 @@ class AhmadJITEngine {
                 throw new Error('WebLLM library not loaded');
             }
 
-            this.engine = new webllm.MLCEngine({
-                model: modelId,
-                useWebGPU: true,
+            // WebLLM init function
+            if (typeof webllm.CreateMLCEngine !== 'function') {
+                throw new Error('WebLLM CreateMLCEngine not available');
+            }
+
+            this.engine = await webllm.CreateMLCEngine(modelId, {
+                initProgressCallback: (msg) => {
+                    console.log('WebLLM init:', msg);
+                }
             });
 
             this.state = 'INDEXING';
