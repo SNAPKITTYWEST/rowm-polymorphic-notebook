@@ -57,3 +57,10 @@ target/
 
 # HTML (interactive notebooks - keep language metrics pure)
 *.html
+
+# CSS (styling artifacts)
+*.css
+
+# Shell scripts (automation, deployment)
+*.sh
+*.bash
