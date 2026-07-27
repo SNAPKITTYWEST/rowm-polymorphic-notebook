@@ -12,6 +12,9 @@ pub mod notebook_merkle;
 pub mod web_agent;
 pub mod self_modifying;
 
+#[cfg(test)]
+mod tests;
+
 pub use orchestrator::Orchestrator;
 pub use receipt::{Receipt, ReceiptChain};
 pub use receipt_v2::{ReceiptV2, ReceiptChainV2, ReceiptStatus, PerformanceMetrics};
