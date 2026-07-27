@@ -1,0 +1,18 @@
+[package]
+name = "subleq-ir"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Unified Intermediate Representation — AST, bytecode, SUBLEQ codegen"
+
+[dependencies]
+subleq-vm.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+blake3.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
