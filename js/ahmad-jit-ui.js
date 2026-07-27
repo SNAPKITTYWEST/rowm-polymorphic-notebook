@@ -1,6 +1,6 @@
 /**
  * Ahmad JIT UI
- * Centered chat box for Ollama-powered inference
+ * Centered chat box for WebLLM inference
  */
 
 class AhmadJITUI {
@@ -43,7 +43,7 @@ class AhmadJITUI {
                 <div id="ahmad-jit-composer" style="padding: 12px; border-top: 1px solid #2a3654; display: flex; flex-direction: column; gap: 8px;">
                     <textarea id="ahmad-jit-input" placeholder="Ask about this notebook..." style="width: 100%; height: 50px; padding: 8px; background: #0a0e27; color: #e0e0e0; border: 1px solid #2a3654; border-radius: 4px; font-family: monospace; font-size: 12px; resize: none;" disabled></textarea>
                     <div style="display: flex; gap: 8px;">
-                        <button id="ahmad-jit-load" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;">CONNECT TO OLLAMA</button>
+                        <button id="ahmad-jit-load" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;">LOAD MODEL</button>
                     </div>
                     <div id="ahmad-jit-action-buttons" style="display: none; gap: 8px;">
                         <button id="ahmad-jit-send" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;" disabled>SEND</button>
@@ -66,7 +66,7 @@ class AhmadJITUI {
     }
 
     setupEventListeners() {
-        this.elements.loadBtn.addEventListener('click', () => this.connectToOllama());
+        this.elements.loadBtn.addEventListener('click', () => this.loadModel());
         this.elements.send.addEventListener('click', () => this.sendMessage());
         this.elements.stop.addEventListener('click', () => this.stopGeneration());
         this.elements.input.addEventListener('keydown', (e) => {
@@ -77,18 +77,17 @@ class AhmadJITUI {
         });
     }
 
-    async connectToOllama() {
+    async loadModel() {
         try {
             this.elements.loadBtn.disabled = true;
-            this.updateStatus('CONNECTING');
-            this.addMessage('system', 'Connecting to Ollama at http://localhost:11434...');
-            this.addMessage('system', 'Make sure ollama serve is running: ollama serve');
+            this.updateStatus('LOADING');
+            this.addMessage('system', 'Initializing WebLLM engine...');
+            this.addMessage('system', 'Downloading TinyLlama model (500MB, takes 1-5 min)...');
 
             const engine = new AhmadJITEngine();
             window.ahmadEngine = engine;
 
-            // Try to initialize with tinyllama (small, quick to load)
-            await engine.initialize('tinyllama');
+            await engine.initialize();
 
             this.updateStatus('READY');
             this.elements.loadBtn.style.display = 'none';
@@ -96,14 +95,13 @@ class AhmadJITUI {
             this.elements.input.disabled = false;
             this.elements.send.disabled = false;
 
-            this.addMessage('system', '✓ Ahmad Bot connected to Ollama. Ask about this notebook.');
+            this.addMessage('system', '✓ Ahmad Bot ready. Ask about this notebook.');
         } catch (error) {
             this.updateStatus('ERROR');
             this.addMessage('system', `Error: ${error.message}`);
-            this.addMessage('system', 'Make sure Ollama is running: ollama serve');
-            this.addMessage('system', 'Then try again or check console (F12).');
+            this.addMessage('system', 'Check console (F12) for details.');
             this.elements.loadBtn.disabled = false;
-            console.error('Ollama connection failed:', error);
+            console.error('Model load failed:', error);
         }
     }
 
@@ -115,7 +113,7 @@ class AhmadJITUI {
         }
 
         if (!window.ahmadEngine) {
-            this.addMessage('system', 'Error: Ollama engine not initialized. Connect first.');
+            this.addMessage('system', 'Error: Engine not initialized. Load model first.');
             return;
         }
 
@@ -211,7 +209,7 @@ class AhmadJITUI {
         this.elements.status.textContent = status;
         this.elements.status.style.color =
             status === 'READY' ? '#10b981' :
-            status === 'CONNECTING' ? '#fbbf24' :
+            status === 'LOADING' ? '#fbbf24' :
             status === 'GENERATING' ? '#fbbf24' :
             status === 'ERROR' ? '#ef4444' :
             '#a0a0a0';
@@ -219,27 +217,12 @@ class AhmadJITUI {
 }
 
 // Auto-initialize on load
-function initializeAhmadUI() {
-    try {
-        if (typeof AhmadJITUI !== 'undefined') {
-            window.ahmadJITUI = new AhmadJITUI();
-            console.log('Ahmad JIT UI initialized successfully');
-            console.log('Ready for Ollama connection. Click: CONNECT TO OLLAMA');
-        } else {
-            console.error('AhmadJITUI class not found');
-        }
-    } catch (error) {
-        console.error('Failed to initialize Ahmad JIT UI:', error);
-    }
-}
-
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeAhmadUI);
+    document.addEventListener('DOMContentLoaded', () => {
+        window.ahmadJITUI = new AhmadJITUI();
+        console.log('Ahmad JIT UI initialized. Click LOAD MODEL to start.');
+    });
 } else {
-    initializeAhmadUI();
+    window.ahmadJITUI = new AhmadJITUI();
+    console.log('Ahmad JIT UI initialized. Click LOAD MODEL to start.');
 }
-
-// Provide global hook for manual initialization if needed
-window.initAhmadUI = initializeAhmadUI;
-
-console.log('Ahmad JIT UI scripts loaded. Ollama backend ready.');

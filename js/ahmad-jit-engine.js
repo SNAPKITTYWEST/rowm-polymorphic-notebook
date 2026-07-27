@@ -1,58 +1,64 @@
 /**
- * Ahmad JIT Engine — Ollama Backend
- * Uses local Ollama API instead of WebLLM
- * Requires: ollama serve running on http://localhost:11434
+ * Ahmad JIT Engine
+ * Browser-based LLM inference using WebLLM
+ * Model: TinyLlama-1.1B-Chat-v1.0-q4f32_1-MLC (real WebLLM model)
  */
 
 class AhmadJITEngine {
-    constructor(ollamaUrl = 'http://localhost:11434') {
-        this.ollamaUrl = ollamaUrl;
+    constructor() {
+        this.engine = null;
         this.state = 'OFFLINE';
         this.conversationHistory = [];
         this.notebookCells = [];
         this.abortController = null;
-        this.currentModel = null;
+        this.modelId = 'TinyLlama-1.1B-Chat-v1.0-q4f32_1-MLC';  // Real WebLLM model
     }
 
-    async checkOllamaConnection() {
+    async initialize() {
         try {
-            const response = await fetch(`${this.ollamaUrl}/api/tags`);
-            if (!response.ok) {
-                throw new Error(`Ollama returned ${response.status}`);
-            }
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Ollama connection failed:', error);
-            return null;
-        }
-    }
-
-    async initialize(modelName = 'tinyllama') {
-        try {
-            this.state = 'CHECKING_CONNECTION';
-            console.log('Checking Ollama connection at:', this.ollamaUrl);
-
-            // Check if Ollama is running
-            const tags = await this.checkOllamaConnection();
-            if (!tags) {
-                throw new Error(`Ollama not running at ${this.ollamaUrl}. Run: ollama serve`);
+            this.state = 'CHECKING_WEBGPU';
+            if (!navigator.gpu) {
+                console.warn('WebGPU not available, will use CPU (slower)');
+            } else {
+                console.log('WebGPU available for acceleration');
             }
 
-            console.log('Ollama connected! Available models:', tags.models?.map(m => m.name));
-
-            // Check if model is available
-            const modelAvailable = tags.models && tags.models.some(m => m.name === modelName);
-            if (!modelAvailable) {
-                throw new Error(`Model '${modelName}' not available. Available: ${tags.models?.map(m => m.name).join(', ')}`);
+            this.state = 'LOADING';
+            const webllm = window.webllm;
+            if (!webllm) {
+                throw new Error('WebLLM library not loaded. Check CDN script.');
             }
 
-            this.currentModel = modelName;
+            // WebLLM 0.2.32 uses new MLCEngine()
+            if (typeof webllm.MLCEngine !== 'function') {
+                throw new Error('WebLLM MLCEngine not available');
+            }
+
+            console.log(`Initializing WebLLM engine with model: ${this.modelId}`);
+
+            // Initialize MLCEngine
+            this.engine = new webllm.MLCEngine();
+
+            // Load the model (this downloads ~500MB weights)
+            try {
+                this.state = 'DOWNLOADING_MODEL';
+                console.log(`Downloading model weights for ${this.modelId}...`);
+                await this.engine.reload(this.modelId, {
+                    initProgressCallback: (msg) => {
+                        console.log('Model init progress:', msg);
+                    },
+                });
+                console.log('Model loaded successfully');
+            } catch (reloadError) {
+                console.error('Model reload failed:', reloadError);
+                throw new Error(`Failed to load model ${this.modelId}: ${reloadError.message}`);
+            }
+
             this.state = 'INDEXING';
             this.buildNotebookIndex();
 
             this.state = 'READY';
-            console.log(`Ahmad Bot ready with model: ${modelName}`);
+            console.log('Ahmad Bot ready!');
             return true;
         } catch (error) {
             this.state = 'ERROR';
@@ -148,59 +154,38 @@ ${question}`;
 
         try {
             const systemPrompt = this.buildSystemPrompt(userMessage);
-            const prompt = `${systemPrompt}\n\nAssistant:`;
+            const messages = [
+                { role: 'system', content: systemPrompt },
+                ...this.conversationHistory,
+                { role: 'user', content: userMessage },
+            ];
 
-            console.log(`Generating with model: ${this.currentModel}`);
+            console.log('Generating response...');
 
-            // Call Ollama API with streaming
-            const response = await fetch(`${this.ollamaUrl}/api/generate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: this.currentModel,
-                    prompt: prompt,
-                    stream: true,
-                    temperature: 0.2,
-                    top_p: 0.9,
-                    num_predict: 600,
-                }),
-                signal: this.abortController.signal,
+            // WebLLM generate() returns async iterable of response chunks
+            const response = await this.engine.generate(messages, {
+                temperature: 0.2,
+                top_p: 0.9,
+                max_tokens: 600,
+                stream: true,
             });
 
-            if (!response.ok) {
-                throw new Error(`Ollama API returned ${response.status}`);
-            }
-
-            // Parse streaming response
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done || this.abortController.signal.aborted) {
+            // Stream tokens from response
+            for await (const chunk of response) {
+                if (this.abortController.signal.aborted) {
                     break;
                 }
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n').filter(l => l.trim());
-
-                for (const line of lines) {
-                    try {
-                        const json = JSON.parse(line);
-                        if (json.response) {
-                            fullResponse += json.response;
-                            if (onToken && typeof onToken === 'function') {
-                                try {
-                                    onToken(json.response);
-                                } catch (callbackError) {
-                                    console.error('onToken callback error:', callbackError);
-                                }
-                            }
+                // WebLLM chunk has format: { text: "token" } or { delta: { text: "token" } }
+                const token = chunk.text ?? chunk.delta?.text ?? '';
+                if (token && typeof token === 'string') {
+                    fullResponse += token;
+                    if (onToken && typeof onToken === 'function') {
+                        try {
+                            onToken(token);
+                        } catch (callbackError) {
+                            console.error('onToken callback error:', callbackError);
                         }
-                    } catch (e) {
-                        // Skip invalid JSON lines
                     }
                 }
             }
@@ -212,7 +197,7 @@ ${question}`;
             this.state = 'READY';
             return fullResponse;
         } catch (error) {
-            if (error.name === 'AbortError' || error.message === 'The operation was aborted') {
+            if (error.name === 'AbortError') {
                 this.state = 'STOPPED';
                 return fullResponse;
             }
@@ -233,8 +218,10 @@ ${question}`;
     }
 
     unload() {
-        // Ollama stays running, just reset state
-        this.currentModel = null;
+        if (this.engine) {
+            this.engine.terminate?.();
+        }
+        this.engine = null;
         this.state = 'OFFLINE';
     }
 
