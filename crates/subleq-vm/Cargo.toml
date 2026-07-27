@@ -21,6 +21,7 @@ blake3.workspace = true
 proptest.workspace = true
 criterion.workspace = true
 
-[[bench]]
-name = "subleq_bench"
-harness = false
+# Benchmark disabled: benches/subleq_bench.rs not yet created
+# [[bench]]
+# name = "subleq_bench"
+# harness = false

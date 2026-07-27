@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Instruction Schema",
+  "description": "Canonical instruction format for LOC triad dispatch",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "instruction_id",
+    "symbol",
+    "target_runtime",
+    "verb",
+    "arguments",
+    "timestamp",
+    "instruction_hash"
+  ],
+  "properties": {
+    "protocol_version": {
+      "type": "string",
+      "description": "Protocol version (e.g., '1.0.0')",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "instruction_id": {
+      "type": "string",
+      "description": "Unique instruction identifier (UUID or hash)",
+      "minLength": 32,
+      "maxLength": 64
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Emoji or symbolic identifier (e.g., '⚡', '🦀', '✅')",
+      "minLength": 1,
+      "maxLength": 10
+    },
+    "target_runtime": {
+      "type": "string",
+      "enum": ["rust", "ada", "holyc", "haskell", "emoji", "python3"],
+      "description": "Target execution runtime"
+    },
+    "verb": {
+      "type": "string",
+      "description": "Operation verb (e.g., 'Execute', 'Verify', 'Dispatch')",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "arguments": {
+      "type": "object",
+      "description": "Key-value arguments for the instruction",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean", "null"]
+      }
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Unix timestamp (seconds since epoch)",
+      "minimum": 0
+    },
+    "instruction_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of canonical instruction representation",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "capability_id": {
+      "type": "string",
+      "description": "Capability required for this instruction",
+      "minLength": 10
+    },
+    "source_cell_id": {
+      "type": "string",
+      "description": "Notebook cell ID that generated this instruction"
+    }
+  },
+  "additionalProperties": false
+}

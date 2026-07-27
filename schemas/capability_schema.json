@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Capability Schema",
+  "description": "Cryptographic capability object for authorization",
+  "type": "object",
+  "required": [
+    "capability_version",
+    "capability_id",
+    "issuer_id",
+    "agent_id",
+    "target_runtime",
+    "permissions",
+    "issued_at",
+    "expires_at",
+    "signature"
+  ],
+  "properties": {
+    "capability_version": {
+      "type": "string",
+      "description": "Schema version",
+      "enum": ["1.0"]
+    },
+    "capability_id": {
+      "type": "string",
+      "description": "Unique capability identifier",
+      "minLength": 32,
+      "maxLength": 64
+    },
+    "issuer_id": {
+      "type": "string",
+      "description": "Agent ID that issued this capability (typically cipher)",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Agent that holds this capability",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "target_runtime": {
+      "type": "string",
+      "enum": ["rust", "ada", "holyc", "haskell", "emoji", "python3"],
+      "description": "Runtime this capability applies to"
+    },
+    "permissions": {
+      "type": "array",
+      "description": "List of permissions granted",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "minItems": 1
+    },
+    "resource_limits": {
+      "type": "object",
+      "description": "Resource constraints",
+      "properties": {
+        "max_memory_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_cpu_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_dispatch_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "issued_at": {
+      "type": "integer",
+      "description": "Unix timestamp when capability was issued",
+      "minimum": 0
+    },
+    "expires_at": {
+      "type": "integer",
+      "description": "Unix timestamp when capability expires",
+      "minimum": 0
+    },
+    "nonce": {
+      "type": "string",
+      "description": "Random nonce for uniqueness",
+      "minLength": 16,
+      "maxLength": 64
+    },
+    "parent_capability_hash": {
+      "type": ["string", "null"],
+      "description": "Hash of parent capability (for delegation chains)",
+      "pattern": "^([a-f0-9]{64}|null)$"
+    },
+    "revocation_reference": {
+      "type": ["string", "null"],
+      "description": "Hash of revocation record if capability has been revoked"
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 signature of capability object",
+      "minLength": 128,
+      "maxLength": 128,
+      "pattern": "^[a-f0-9]{128}$"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Receipt Schema",
+  "description": "Execution receipt with cryptographic sealing",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "sequence_number",
+    "receipt_id",
+    "previous_receipt_hash",
+    "agent_id",
+    "capability_id",
+    "instruction_hash",
+    "action",
+    "input_hash",
+    "output_hash",
+    "runtime_identity",
+    "runtime_version",
+    "source_commit",
+    "environment_hash",
+    "timestamp",
+    "monotonic_counter",
+    "status",
+    "signature"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0"],
+      "description": "Receipt schema version"
+    },
+    "sequence_number": {
+      "type": "integer",
+      "description": "Monotonic sequence in receipt chain",
+      "minimum": 0
+    },
+    "receipt_id": {
+      "type": "string",
+      "description": "Unique receipt identifier",
+      "minLength": 32,
+      "maxLength": 64
+    },
+    "receipt_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of this receipt",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_receipt_hash": {
+      "type": "string",
+      "description": "Hash of previous receipt in chain (or zeros for first)",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Agent that executed this action",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "capability_id": {
+      "type": "string",
+      "description": "Capability under which this action was performed",
+      "minLength": 32
+    },
+    "instruction_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the instruction executed",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "action": {
+      "type": "string",
+      "description": "Action performed (dispatch, verify, execute, etc.)",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "input_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of input to this action",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of output from this action",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "runtime_identity": {
+      "type": "string",
+      "description": "Identity of the runtime that executed this",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "runtime_version": {
+      "type": "string",
+      "description": "Version string of runtime",
+      "pattern": "^\\d+\\.\\d+\\.\\d+.*$"
+    },
+    "source_commit": {
+      "type": "string",
+      "description": "Git commit hash of source code",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "environment_hash": {
+      "type": "string",
+      "description": "Hash of environment variables and config at execution time",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Unix timestamp of execution",
+      "minimum": 0
+    },
+    "monotonic_counter": {
+      "type": "integer",
+      "description": "System monotonic counter (for causality)",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "failure", "pending", "cancelled"],
+      "description": "Execution status"
+    },
+    "error_message": {
+      "type": ["string", "null"],
+      "description": "Error message if status is failure"
+    },
+    "performance_metrics": {
+      "type": "object",
+      "description": "Optional performance data",
+      "properties": {
+        "wall_time_ms": { "type": "number" },
+        "cpu_time_ms": { "type": "number" },
+        "memory_peak_bytes": { "type": "integer" }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 signature of receipt",
+      "minLength": 128,
+      "maxLength": 128,
+      "pattern": "^[a-f0-9]{128}$"
+    },
+    "sealed": {
+      "type": "boolean",
+      "description": "Whether this receipt is WORM-sealed"
+    }
+  },
+  "additionalProperties": false
+}

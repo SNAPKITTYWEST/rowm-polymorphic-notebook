@@ -8,7 +8,7 @@ members = [
     "crates/proof-validator",
     "crates/m4-morph",
     "crates/notebook-kernel",
-    "crates/ledge-sdk",
+    "crates/notebook-orchestrator",
 ]
 exclude = ["tools/*", "docker/*", "scripts/*"]
 
@@ -23,6 +23,16 @@ categories = ["embedded", "development-tools", "compilers", "science"]
 keywords = ["rowm", "subleq", "oisc", "notebook", "polyglot", "self-modifying", "formal-verification"]
 
 [workspace.dependencies]
+# Internal crates
+subleq-vm = { path = "crates/subleq-vm" }
+subleq-ir = { path = "crates/subleq-ir" }
+polyglot-frontend = { path = "crates/polyglot-frontend" }
+invariant-extractor = { path = "crates/invariant-extractor" }
+proof-validator = { path = "crates/proof-validator" }
+m4-morph = { path = "crates/m4-morph" }
+notebook-kernel = { path = "crates/notebook-kernel" }
+notebook-orchestrator = { path = "crates/notebook-orchestrator" }
+
 # Core
 anyhow = "1.0"
 thiserror = "1.0"
@@ -39,12 +49,12 @@ dashmap = "5.5"
 memmap2 = "0.9"
 nix = { version = "0.27", features = ["process"] }
 
-# Parsing / Polyglot
-tree-sitter = "0.22"
-tree-sitter-python = "0.22"
-tree-sitter-javascript = "0.22"
-tree-sitter-c = "0.22"
-tree-sitter-rust = "0.22"
+# Parsing / Polyglot (pinned to available versions)
+tree-sitter = "0.20"
+tree-sitter-python = "0.20"
+tree-sitter-javascript = "0.20"
+tree-sitter-c = "0.20"
+tree-sitter-rust = "0.20"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
@@ -68,16 +78,16 @@ merkle-tree = "0.5"
 tokio = { version = "1.35", features = ["full", "rt-multi-thread"] }
 bytes = "1.5"
 shared-memory = "0.2"
+uuid = { version = "1.0", features = ["v4"] }
+crossbeam = "0.8"
 
 # Testing
 proptest = "1.0"
 criterion = { version = "0.5", features = ["html_reports"] }
 
-[workspace.lints]
-rust.unused_crate_dependencies = "warn"
-rust_2018_idioms = true
-unused_lifetimes = "warn"
-unused_qualifications = "warn"
+[workspace.lints.rust]
+unused_crate_dependencies = "warn"
+unsafe_code = "warn"
 
 [profile.release]
 lto = "fat"

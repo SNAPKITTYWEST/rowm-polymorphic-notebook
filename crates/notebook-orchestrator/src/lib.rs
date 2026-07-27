@@ -1,0 +1,12 @@
+// Non-Recursive Notebook Orchestration Runtime
+// Implements LOC triad dispatch with WORM-sealed receipt chains
+
+pub mod orchestrator;
+pub mod receipt;
+pub mod instruction;
+pub mod stage;
+
+pub use orchestrator::Orchestrator;
+pub use receipt::{Receipt, ReceiptChain};
+pub use instruction::Instruction;
+pub use stage::Stage;
