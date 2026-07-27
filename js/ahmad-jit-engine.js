@@ -1,7 +1,7 @@
 /**
  * Ahmad JIT Engine
- * Browser-based LLM inference using WebLLM
- * Model: TinyLlama-1.1B-Chat-v1.0-q4f32_1-MLC (real WebLLM model)
+ * Browser-based LLM inference using WebLLM (ES module)
+ * Model: TinyLlama-1.1B-Chat-v1.0-q4f32_1-MLC
  */
 
 class AhmadJITEngine {
@@ -20,55 +20,50 @@ class AhmadJITEngine {
             if (!navigator.gpu) {
                 console.warn('WebGPU not available, will use CPU (slower)');
             } else {
-                console.log('WebGPU available for acceleration');
+                console.log('✓ WebGPU available for acceleration');
             }
 
             this.state = 'LOADING';
-            const webllm = window.webllm;
-            if (!webllm) {
-                throw new Error('WebLLM library not loaded. Check CDN script.');
-            }
+            console.log('Dynamically importing WebLLM ES module...');
 
-            console.log('✓ window.webllm loaded successfully (no storage access)');
-            console.log('✓ WebLLM version:', typeof webllm.version !== 'undefined' ? webllm.version : 'unknown');
-
-            // WebLLM 0.2.32 uses new MLCEngine()
-            if (typeof webllm.MLCEngine !== 'function') {
-                throw new Error('WebLLM MLCEngine not available');
-            }
-
-            console.log('✓ MLCEngine constructor available');
-            console.log(`Initializing WebLLM engine with model: ${this.modelId}`);
-
-            // Initialize MLCEngine with in-memory caching (no IndexedDB)
-            // This prevents storage tracking issues while maintaining performance
-            this.engine = new webllm.MLCEngine({
-                model: this.modelId,
-                useIndexedDBCache: false,  // CRITICAL: disable IndexedDB storage access
-                preferredDevice: 'webgpu'  // Try WebGPU, fallback to WASM
-            });
-            console.log('MLCEngine created with in-memory caching (no IndexedDB)');
-
-            // Load the model (this downloads ~500MB weights)
+            // Dynamic import for ES module (not a global script)
+            let webllm;
             try {
-                this.state = 'DOWNLOADING_MODEL';
-                console.log(`Downloading model weights for ${this.modelId}...`);
-                await this.engine.reload(this.modelId, {
-                    initProgressCallback: (msg) => {
-                        console.log('Model init progress:', msg);
+                webllm = await import('https://esm.run/@mlc-ai/web-llm');
+                console.log('✓ WebLLM ES module imported successfully');
+            } catch (importError) {
+                console.error('Failed to import WebLLM:', importError);
+                throw new Error(`Failed to import WebLLM ES module: ${importError.message}`);
+            }
+
+            // Verify CreateMLCEngine is available
+            if (!webllm.CreateMLCEngine) {
+                throw new Error('WebLLM loaded, but CreateMLCEngine is unavailable. Check module export.');
+            }
+
+            console.log('✓ CreateMLCEngine available from WebLLM module');
+
+            // Create engine using CreateMLCEngine (not MLCEngine constructor)
+            this.state = 'DOWNLOADING_MODEL';
+            console.log(`Creating MLCEngine for model: ${this.modelId}`);
+
+            try {
+                this.engine = await webllm.CreateMLCEngine(this.modelId, {
+                    initProgressCallback: (progress) => {
+                        console.log('Model loading progress:', progress);
                     },
                 });
-                console.log('Model loaded successfully (in-memory, will be lost on page refresh)');
-            } catch (reloadError) {
-                console.error('Model reload failed:', reloadError);
-                throw new Error(`Failed to load model ${this.modelId}: ${reloadError.message}`);
+                console.log('✓ MLCEngine created and model initialized successfully');
+            } catch (engineError) {
+                console.error('Failed to create engine:', engineError);
+                throw new Error(`Failed to create MLCEngine: ${engineError.message}`);
             }
 
             this.state = 'INDEXING';
             this.buildNotebookIndex();
 
             this.state = 'READY';
-            console.log('Ahmad Bot ready!');
+            console.log('✓ Ahmad Bot ready!');
             return true;
         } catch (error) {
             this.state = 'ERROR';
@@ -170,7 +165,7 @@ ${question}`;
                 { role: 'user', content: userMessage },
             ];
 
-            console.log('Generating response...');
+            console.log('Generating response with WebLLM...');
 
             // WebLLM generate() returns async iterable of response chunks
             const response = await this.engine.generate(messages, {
