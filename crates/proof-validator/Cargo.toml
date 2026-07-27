@@ -1,0 +1,22 @@
+[package]
+name = "proof-validator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Proof validator — Curry-Howard checker with WORM rollback"
+
+[dependencies]
+subleq-vm.workspace = true
+subleq-ir.workspace = true
+invariant-extractor.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+blake3.workspace = true
+ed25519-dalek.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
