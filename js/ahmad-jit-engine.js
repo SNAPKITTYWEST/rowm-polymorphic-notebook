@@ -22,23 +22,24 @@ class AhmadJITEngine {
             this.state = 'LOADING';
             const webllm = window.webllm;
             if (!webllm) {
-                throw new Error('WebLLM library not loaded');
+                throw new Error('WebLLM library not loaded. Ensure https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.32/dist/web-llm.js is loaded');
             }
 
             // WebLLM 0.2.32 uses new MLCEngine()
             if (typeof webllm.MLCEngine !== 'function') {
-                throw new Error('WebLLM MLCEngine not available');
+                throw new Error('WebLLM MLCEngine not available. Check CDN script load');
             }
 
-            // Initialize MLCEngine
-            this.engine = new webllm.MLCEngine({
-                initProgressCallback: (msg) => {
-                    console.log('WebLLM init:', msg);
-                },
-            });
+            // Initialize MLCEngine (no constructor params needed for 0.2.32)
+            this.engine = new webllm.MLCEngine();
 
             // Load the model (this is async and downloads weights)
-            await this.engine.reload(modelId);
+            try {
+                await this.engine.reload(modelId);
+            } catch (reloadError) {
+                console.error('Model reload failed:', reloadError);
+                throw new Error(`Failed to load model ${modelId}: ${reloadError.message}`);
+            }
 
             this.state = 'INDEXING';
             this.buildNotebookIndex();
@@ -47,6 +48,7 @@ class AhmadJITEngine {
             return true;
         } catch (error) {
             this.state = 'ERROR';
+            console.error('Ahmad JIT Engine initialization failed:', error);
             throw error;
         }
     }
@@ -126,6 +128,10 @@ ${question}`;
             throw new Error(`Engine not ready: ${this.state}`);
         }
 
+        if (!userMessage || userMessage.trim().length === 0) {
+            throw new Error('User message cannot be empty');
+        }
+
         this.state = 'GENERATING';
         this.abortController = new AbortController();
         let fullResponse = '';
@@ -138,40 +144,58 @@ ${question}`;
                 { role: 'user', content: userMessage },
             ];
 
-            // WebLLM uses generate() for streaming
-            const response = await this.engine.generate(messages, {
-                temperature: 0.2,
-                top_p: 0.9,
-                max_tokens: 600,
-                stream: true,
-            });
+            // WebLLM 0.2.32 generate with streaming
+            let response;
+            try {
+                response = await this.engine.generate(messages, {
+                    temperature: 0.2,
+                    top_p: 0.9,
+                    max_tokens: 600,
+                    stream: true,
+                });
+            } catch (generateError) {
+                this.state = 'ERROR';
+                throw new Error(`Generation failed: ${generateError.message}`);
+            }
+
+            // Handle streaming response
+            if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
+                throw new Error('Invalid response from engine: not an async iterable');
+            }
 
             for await (const chunk of response) {
                 if (this.abortController.signal.aborted) {
                     break;
                 }
 
-                const token = chunk.text ?? chunk.delta?.text ?? chunk.delta?.content ?? '';
-                if (token) {
+                // WebLLM 0.2.32 returns chunks with either text or delta.text
+                const token = chunk?.text ?? chunk?.delta?.text ?? chunk?.delta?.content ?? '';
+                if (token && typeof token === 'string') {
                     fullResponse += token;
-                    if (onToken) {
-                        onToken(token);
+                    if (onToken && typeof onToken === 'function') {
+                        try {
+                            onToken(token);
+                        } catch (callbackError) {
+                            console.error('onToken callback error:', callbackError);
+                        }
                     }
                 }
             }
 
+            // Store in conversation history (safe due to textContent usage in UI)
             this.conversationHistory.push({ role: 'user', content: userMessage });
             this.conversationHistory.push({ role: 'assistant', content: fullResponse });
 
             this.state = 'READY';
             return fullResponse;
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                this.state = 'ERROR';
-                throw error;
+            if (error.name === 'AbortError' || error.message === 'The operation was aborted') {
+                this.state = 'STOPPED';
+                return fullResponse;
             }
-            this.state = 'STOPPED';
-            return fullResponse;
+            this.state = 'ERROR';
+            console.error('Generation error:', error);
+            throw error;
         }
     }
 

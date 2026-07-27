@@ -81,12 +81,23 @@ class AhmadJITUI {
         try {
             this.elements.loadBtn.disabled = true;
             this.updateStatus('LOADING');
-            this.addMessage('system', 'Initializing WebLLM...');
+            this.addMessage('system', 'Initializing WebLLM engine and downloading model (500MB+)...');
+            this.addMessage('system', 'This may take 1-5 minutes on first load. Check browser console for progress.');
+
+            // Verify engine exists (from ahmad-jit-engine.js)
+            if (typeof AhmadJITEngine === 'undefined') {
+                throw new Error('AhmadJITEngine not loaded. Check that js/ahmad-jit-engine.js is included.');
+            }
 
             const engine = new AhmadJITEngine();
             window.ahmadEngine = engine;
 
-            await engine.initialize('Qwen2-0.5B-Instruct-q4f32_1-MLC');
+            // Load the model - this is a long operation
+            try {
+                await engine.initialize('Qwen2-0.5B-Instruct-q4f32_1-MLC');
+            } catch (initError) {
+                throw new Error(`Model initialization failed: ${initError.message}`);
+            }
 
             this.updateStatus('READY');
             this.elements.loadBtn.style.display = 'none';
@@ -98,18 +109,30 @@ class AhmadJITUI {
         } catch (error) {
             this.updateStatus('ERROR');
             this.addMessage('system', `Error: ${error.message}`);
+            this.addMessage('system', 'Check browser console (F12) for detailed error logs.');
             this.elements.loadBtn.disabled = false;
+            console.error('Model load failed:', error);
         }
     }
 
     async sendMessage() {
         const text = this.elements.input.value.trim();
-        if (!text || !window.ahmadEngine) return;
+        if (!text) {
+            this.addMessage('system', 'Please enter a message.');
+            return;
+        }
+
+        if (!window.ahmadEngine) {
+            this.addMessage('system', 'Error: Engine not initialized. Load model first.');
+            return;
+        }
 
         this.addMessage('user', text);
         this.elements.input.value = '';
+        this.elements.input.disabled = true;
         this.elements.send.disabled = true;
         this.elements.stop.disabled = false;
+        this.elements.loadBtn.disabled = true;
 
         this.updateStatus('GENERATING');
 
@@ -119,13 +142,22 @@ class AhmadJITUI {
                 response += token;
                 this.appendToken(token);
             });
+
+            if (!response || response.length === 0) {
+                this.addMessage('system', 'Warning: No response generated.');
+            }
         } catch (error) {
-            this.addMessage('system', `Error: ${error.message}`);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            this.addMessage('system', `Generation error: ${errorMsg}`);
+            console.error('Message generation failed:', error);
         }
 
         this.updateStatus('READY');
+        this.elements.input.disabled = false;
         this.elements.send.disabled = false;
         this.elements.stop.disabled = true;
+        this.elements.loadBtn.disabled = false;
+        this.elements.input.focus();
     }
 
     stopGeneration() {
@@ -157,13 +189,30 @@ class AhmadJITUI {
     }
 
     appendToken(token) {
+        if (!token || typeof token !== 'string') {
+            return; // Silently skip invalid tokens
+        }
+
         const messages = this.elements.messages;
-        if (messages.lastChild && messages.lastChild.dataset?.role === 'assistant') {
+        if (!messages) {
+            console.error('Messages container not found');
+            return;
+        }
+
+        if (messages.lastChild && messages.lastChild.dataset && messages.lastChild.dataset.role === 'assistant') {
+            // Append to existing assistant message (textContent is XSS-safe)
             messages.lastChild.textContent += token;
         } else {
+            // Create new assistant message
             this.addMessage('assistant', token);
         }
-        messages.scrollTop = messages.scrollHeight;
+
+        // Auto-scroll to bottom
+        try {
+            messages.scrollTop = messages.scrollHeight;
+        } catch (e) {
+            console.warn('Scroll failed:', e);
+        }
     }
 
     updateStatus(status) {
@@ -177,10 +226,24 @@ class AhmadJITUI {
 }
 
 // Auto-initialize on load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.ahmadJITUI = new AhmadJITUI();
-    });
-} else {
-    window.ahmadJITUI = new AhmadJITUI();
+function initializeAhmadUI() {
+    try {
+        if (typeof AhmadJITUI !== 'undefined') {
+            window.ahmadJITUI = new AhmadJITUI();
+            console.log('Ahmad JIT UI initialized successfully');
+        } else {
+            console.error('AhmadJITUI class not found');
+        }
+    } catch (error) {
+        console.error('Failed to initialize Ahmad JIT UI:', error);
+    }
 }
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAhmadUI);
+} else {
+    initializeAhmadUI();
+}
+
+// Provide global hook for manual initialization if needed
+window.initAhmadUI = initializeAhmadUI;
