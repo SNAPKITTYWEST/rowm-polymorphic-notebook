@@ -1,0 +1,5 @@
+# Exclude from GitHub language metrics
+*.html linguist-vendored
+*.css linguist-vendored
+*.sh linguist-vendored
+*.bash linguist-vendored
