@@ -100,35 +100,8 @@
     <!-- WebLLM Library (Real Model Inference) -->
     <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.33/lib/web-llm.js"></script>
 
-    <!-- Scripts -->
-    <script src="scripts/unicode-ir.js"></script>
-    <script src="scripts/worm-receipts.js"></script>
-    <script src="scripts/notebook-context.js"></script>
-    <script src="scripts/ahmad-bot-engine.js"></script>
-    <script src="scripts/ahmad-bot-ui.js"></script>
-    <script src="scripts/notebook-engine.js"></script>
-
-    <!-- Initialization -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                // Initialize notebook engine
-                window.notebookEngine = new NotebookEngine();
-
-                // Add sample cells
-                window.notebookEngine.addCell('code');
-                window.notebookEngine.addCell('markdown');
-                window.notebookEngine.addCell('code');
-
-                // Mount Ahmad Bot
-                if (typeof AhmadBotUI !== 'undefined') {
-                    window.ahmadBot = new AhmadBotUI();
-                    window.ahmadBot.mount('#jit-launcher', '#jit-panel');
-                }
-            } catch (error) {
-                console.error('Initialization error:', error);
-            }
-        });
-    </script>
+    <!-- Ahmad Bot JIT Engine -->
+    <script src="./js/ahmad-jit-engine.js"></script>
+    <script src="./js/ahmad-jit-ui.js"></script>
 </body>
 </html>
