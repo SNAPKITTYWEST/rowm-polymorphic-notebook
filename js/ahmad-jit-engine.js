@@ -25,19 +25,20 @@ class AhmadJITEngine {
                 throw new Error('WebLLM library not loaded');
             }
 
-            // WebLLM init function
-            if (typeof webllm.CreateMLCEngine !== 'function') {
-                throw new Error('WebLLM CreateMLCEngine not available');
+            // WebLLM 0.2.32 uses new MLCEngine()
+            if (typeof webllm.MLCEngine !== 'function') {
+                throw new Error('WebLLM MLCEngine not available');
             }
 
-            // Initialize with no storage (privacy mode)
-            this.engine = await webllm.CreateMLCEngine(modelId, {
+            // Initialize MLCEngine
+            this.engine = new webllm.MLCEngine({
                 initProgressCallback: (msg) => {
                     console.log('WebLLM init:', msg);
                 },
-                useIndexedDBCache: false, // Disable storage to avoid privacy blocking
-                useWebGPU: !!navigator.gpu,
             });
+
+            // Load the model (this is async and downloads weights)
+            await this.engine.reload(modelId);
 
             this.state = 'INDEXING';
             this.buildNotebookIndex();
@@ -137,8 +138,8 @@ ${question}`;
                 { role: 'user', content: userMessage },
             ];
 
-            const response = await this.engine.chat.completions.create({
-                messages,
+            // WebLLM uses generate() for streaming
+            const response = await this.engine.generate(messages, {
                 temperature: 0.2,
                 top_p: 0.9,
                 max_tokens: 600,
@@ -150,7 +151,7 @@ ${question}`;
                     break;
                 }
 
-                const token = chunk.choices?.[0]?.delta?.content ?? '';
+                const token = chunk.text ?? chunk.delta?.text ?? chunk.delta?.content ?? '';
                 if (token) {
                     fullResponse += token;
                     if (onToken) {
