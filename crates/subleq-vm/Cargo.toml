@@ -1,0 +1,26 @@
+[package]
+name = "subleq-vm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SUBLEQ Virtual Machine — Sovereign execution substrate with self-modification tracking"
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+parking_lot.workspace = true
+memmap2.workspace = true
+nix.workspace = true
+sha2.workspace = true
+blake3.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "subleq_bench"
+harness = false
