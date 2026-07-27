@@ -61,91 +61,11 @@
         </footer>
     </div>
 
-
     <!-- Animation Engine (SVG Canvas) -->
     <canvas id="animation-canvas" style="display: none;"></canvas>
 
-    <!-- WebLLM Library (Real Model Inference) - with fallback CDNs -->
-    <script>
-        // Initialize CDN loading with fallbacks
-        window.webllmCDNLoading = true;
-        window.webllmReady = false;
-        window.webllmLoadTimestamp = Date.now();
-        window.webllmError = null;
-        window.webllmCallbacks = [];
-
-        // Register callback to run when WebLLM finishes loading
-        function onWebLLMReady(callback) {
-            if (window.webllmReady) {
-                callback();
-            } else {
-                window.webllmCallbacks.push(callback);
-            }
-        }
-
-        // Fire all registered callbacks when WebLLM loads
-        function fireWebLLMCallbacks() {
-            console.log('WebLLM ready, firing callbacks...');
-            window.webllmCallbacks.forEach(cb => {
-                try { cb(); } catch(e) { console.error('Callback error:', e); }
-            });
-            window.webllmCallbacks = [];
-        }
-    </script>
-
-    <!-- Primary CDN: jsDelivr (with extended timeout handling) -->
-    <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.32/dist/web-llm.js"
-            onload="window.webllmReady = true; window.webllmCDNLoading = false; console.log('WebLLM loaded from jsDelivr (' + (Date.now() - window.webllmLoadTimestamp) + 'ms)'); fireWebLLMCallbacks();"
-            onerror="window.webllmError = 'jsDelivr failed'; loadWebLLMFallback();">
-    </script>
-
-    <!-- Extended timeout check and fallback trigger -->
-    <script>
-        // If CDN hasn't loaded after 8 seconds, try fallback
-        window.cdnTimeoutHandle = setTimeout(function() {
-            if (!window.webllmReady && !window.webllmError) {
-                console.warn('CDN timeout (8s), trying fallback CDN...');
-                window.webllmError = 'jsDelivr timeout';
-                loadWebLLMFallback();
-            }
-        }, 8000);
-
-        function loadWebLLMFallback() {
-            if (window.webllm) {
-                console.log('WebLLM already loaded');
-                window.webllmReady = true;
-                window.webllmCDNLoading = false;
-                clearTimeout(window.cdnTimeoutHandle);
-                fireWebLLMCallbacks();
-                return;
-            }
-
-            console.warn('Trying fallback CDN (unpkg)...');
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/@mlc-ai/web-llm@0.2.32/dist/web-llm.js';
-            script.onload = function() {
-                window.webllmReady = true;
-                window.webllmCDNLoading = false;
-                clearTimeout(window.cdnTimeoutHandle);
-                console.log('WebLLM loaded from unpkg (' + (Date.now() - window.webllmLoadTimestamp) + 'ms)');
-                fireWebLLMCallbacks();
-            };
-            script.onerror = function() {
-                window.webllmError = 'All CDNs failed (jsDelivr timeout, unpkg error)';
-                window.webllmCDNLoading = false;
-                clearTimeout(window.cdnTimeoutHandle);
-                console.error('Failed to load WebLLM from any CDN');
-                // Show error to user
-                if (window.ahmadJITUI) {
-                    window.ahmadJITUI.addMessage('system', 'ERROR: Failed to load WebLLM library from CDN. Check internet connection.');
-                }
-            };
-            script.onerror();  // Trigger onerror if unpkg also fails
-            document.head.appendChild(script);
-        }
-    </script>
-
-    <!-- Ahmad Bot JIT Engine -->
+    <!-- Ahmad Bot Ollama Engine (Local LLM via Ollama API) -->
+    <!-- Requires: ollama serve running on http://localhost:11434 -->
     <script src="./js/ahmad-jit-engine.js"></script>
     <script src="./js/ahmad-jit-ui.js"></script>
 </body>

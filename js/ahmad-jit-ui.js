@@ -1,6 +1,6 @@
 /**
  * Ahmad JIT UI
- * Centered chat box for real WebLLM inference
+ * Centered chat box for Ollama-powered inference
  */
 
 class AhmadJITUI {
@@ -43,7 +43,7 @@ class AhmadJITUI {
                 <div id="ahmad-jit-composer" style="padding: 12px; border-top: 1px solid #2a3654; display: flex; flex-direction: column; gap: 8px;">
                     <textarea id="ahmad-jit-input" placeholder="Ask about this notebook..." style="width: 100%; height: 50px; padding: 8px; background: #0a0e27; color: #e0e0e0; border: 1px solid #2a3654; border-radius: 4px; font-family: monospace; font-size: 12px; resize: none;" disabled></textarea>
                     <div style="display: flex; gap: 8px;">
-                        <button id="ahmad-jit-load" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;">LOAD LOCAL MODEL</button>
+                        <button id="ahmad-jit-load" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;">CONNECT TO OLLAMA</button>
                     </div>
                     <div id="ahmad-jit-action-buttons" style="display: none; gap: 8px;">
                         <button id="ahmad-jit-send" style="flex: 1; padding: 8px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 12px;" disabled>SEND</button>
@@ -66,7 +66,7 @@ class AhmadJITUI {
     }
 
     setupEventListeners() {
-        this.elements.loadBtn.addEventListener('click', () => this.loadModel());
+        this.elements.loadBtn.addEventListener('click', () => this.connectToOllama());
         this.elements.send.addEventListener('click', () => this.sendMessage());
         this.elements.stop.addEventListener('click', () => this.stopGeneration());
         this.elements.input.addEventListener('keydown', (e) => {
@@ -77,66 +77,18 @@ class AhmadJITUI {
         });
     }
 
-    async loadModel() {
+    async connectToOllama() {
         try {
-            // Check if WebLLM library is loaded
-            if (!window.webllm) {
-                // Check if it's still loading
-                if (window.webllmCDNLoading || (window.webllmLoadTimestamp && Date.now() - window.webllmLoadTimestamp < 15000)) {
-                    const elapsed = window.webllmLoadTimestamp ? Math.round((Date.now() - window.webllmLoadTimestamp) / 1000) : '?';
-                    this.addMessage('system', `WebLLM library is still loading from CDN (${elapsed}s elapsed). Please wait a moment...`);
-                    this.addMessage('system', 'If this takes too long, try clicking the button again in a few seconds.');
-                    this.elements.loadBtn.disabled = false;
-                    return;
-                }
-
-                // Check for specific error
-                if (window.webllmError) {
-                    this.addMessage('system', `WebLLM failed to load: ${window.webllmError}`);
-                    this.addMessage('system', 'Trying to retry from backup CDN (unpkg)...');
-
-                    // Auto-retry from unpkg
-                    if (window.retryWebLLMLoad) {
-                        this.addMessage('system', '⟳ Retrying...');
-                        window.retryWebLLMLoad();
-
-                        // Wait a bit then try again
-                        this.elements.loadBtn.disabled = false;
-                        setTimeout(() => {
-                            if (window.webllm) {
-                                this.addMessage('system', '✓ Retry successful! Try loading the model again.');
-                            } else {
-                                this.addMessage('system', '✗ Retry failed. Check your internet connection.');
-                            }
-                        }, 5000);
-                        return;
-                    }
-
-                    throw new Error(`WebLLM failed to load: ${window.webllmError}. Check your internet connection and try again.`);
-                }
-
-                throw new Error('WebLLM library not available. Ensure index-app.html includes WebLLM CDN script.');
-            }
-
             this.elements.loadBtn.disabled = true;
-            this.updateStatus('LOADING');
-            this.addMessage('system', 'Initializing WebLLM engine and downloading model (500MB+)...');
-            this.addMessage('system', 'This may take 1-5 minutes on first load. Check browser console for progress.');
-
-            // Verify engine exists (from ahmad-jit-engine.js)
-            if (typeof AhmadJITEngine === 'undefined') {
-                throw new Error('AhmadJITEngine not loaded. Check that js/ahmad-jit-engine.js is included.');
-            }
+            this.updateStatus('CONNECTING');
+            this.addMessage('system', 'Connecting to Ollama at http://localhost:11434...');
+            this.addMessage('system', 'Make sure ollama serve is running: ollama serve');
 
             const engine = new AhmadJITEngine();
             window.ahmadEngine = engine;
 
-            // Load the model - this is a long operation
-            try {
-                await engine.initialize('Qwen2-0.5B-Instruct-q4f32_1-MLC');
-            } catch (initError) {
-                throw new Error(`Model initialization failed: ${initError.message}`);
-            }
+            // Try to initialize with tinyllama (small, quick to load)
+            await engine.initialize('tinyllama');
 
             this.updateStatus('READY');
             this.elements.loadBtn.style.display = 'none';
@@ -144,13 +96,14 @@ class AhmadJITUI {
             this.elements.input.disabled = false;
             this.elements.send.disabled = false;
 
-            this.addMessage('system', '✓ Ahmad Bot ready. Ask about this notebook.');
+            this.addMessage('system', '✓ Ahmad Bot connected to Ollama. Ask about this notebook.');
         } catch (error) {
             this.updateStatus('ERROR');
             this.addMessage('system', `Error: ${error.message}`);
-            this.addMessage('system', 'Check browser console (F12) for detailed error logs.');
+            this.addMessage('system', 'Make sure Ollama is running: ollama serve');
+            this.addMessage('system', 'Then try again or check console (F12).');
             this.elements.loadBtn.disabled = false;
-            console.error('Model load failed:', error);
+            console.error('Ollama connection failed:', error);
         }
     }
 
@@ -162,7 +115,7 @@ class AhmadJITUI {
         }
 
         if (!window.ahmadEngine) {
-            this.addMessage('system', 'Error: Engine not initialized. Load model first.');
+            this.addMessage('system', 'Error: Ollama engine not initialized. Connect first.');
             return;
         }
 
@@ -258,31 +211,20 @@ class AhmadJITUI {
         this.elements.status.textContent = status;
         this.elements.status.style.color =
             status === 'READY' ? '#10b981' :
-            status === 'ERROR' ? '#ef4444' :
+            status === 'CONNECTING' ? '#fbbf24' :
             status === 'GENERATING' ? '#fbbf24' :
+            status === 'ERROR' ? '#ef4444' :
             '#a0a0a0';
     }
 }
 
-// Auto-initialize on load (with WebLLM readiness check)
+// Auto-initialize on load
 function initializeAhmadUI() {
     try {
         if (typeof AhmadJITUI !== 'undefined') {
             window.ahmadJITUI = new AhmadJITUI();
             console.log('Ahmad JIT UI initialized successfully');
-
-            // Check WebLLM status and log it
-            if (window.webllm) {
-                console.log('WebLLM library detected:', typeof window.webllm);
-            } else if (window.webllmReady) {
-                console.log('WebLLM marked ready (loading complete)');
-            } else if (window.webllmCDNLoading) {
-                console.warn('WebLLM still loading from CDN...');
-            } else if (window.webllmError) {
-                console.error('WebLLM load error:', window.webllmError);
-            } else {
-                console.warn('WebLLM not loaded and no error recorded. CDN may have failed silently.');
-            }
+            console.log('Ready for Ollama connection. Click: CONNECT TO OLLAMA');
         } else {
             console.error('AhmadJITUI class not found');
         }
@@ -291,62 +233,13 @@ function initializeAhmadUI() {
     }
 }
 
-// Initialize UI when DOM is ready
-function startUIInitialization() {
-    // Always initialize UI immediately (even if CDN not ready)
-    initializeAhmadUI();
-
-    // If WebLLM is ready, we're done
-    if (window.webllmReady) {
-        console.log('WebLLM already ready');
-        return;
-    }
-
-    // Otherwise, wait for WebLLM callback
-    if (window.onWebLLMReady) {
-        window.onWebLLMReady(function() {
-            console.log('WebLLM became ready, UI already initialized');
-        });
-    }
-}
-
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startUIInitialization);
+    document.addEventListener('DOMContentLoaded', initializeAhmadUI);
 } else {
-    startUIInitialization();
+    initializeAhmadUI();
 }
 
-// Provide global hooks for manual operations if needed
+// Provide global hook for manual initialization if needed
 window.initAhmadUI = initializeAhmadUI;
 
-// Add retry capability for CDN loading
-window.retryWebLLMLoad = function() {
-    console.log('Retrying WebLLM load from unpkg...');
-    if (window.webllm) {
-        console.log('WebLLM already loaded');
-        return;
-    }
-    window.webllmError = null;
-    window.webllmReady = false;
-    window.webllmCDNLoading = true;
-
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@mlc-ai/web-llm@0.2.32/dist/web-llm.js';
-    script.onload = function() {
-        window.webllmReady = true;
-        window.webllmCDNLoading = false;
-        console.log('WebLLM loaded from unpkg retry');
-        if (window.fireWebLLMCallbacks) window.fireWebLLMCallbacks();
-        if (window.ahmadJITUI) {
-            window.ahmadJITUI.addMessage('system', 'WebLLM loaded successfully!');
-        }
-    };
-    script.onerror = function() {
-        window.webllmError = 'unpkg retry failed';
-        window.webllmCDNLoading = false;
-        console.error('Retry failed');
-    };
-    document.head.appendChild(script);
-};
-
-console.log('Ahmad JIT UI scripts loaded. WebLLM CDN is loading...');
+console.log('Ahmad JIT UI scripts loaded. Ollama backend ready.');

@@ -1,64 +1,58 @@
 /**
- * Ahmad JIT Engine
- * Real WebLLM local inference for ROWM Notebook
+ * Ahmad JIT Engine — Ollama Backend
+ * Uses local Ollama API instead of WebLLM
+ * Requires: ollama serve running on http://localhost:11434
  */
 
 class AhmadJITEngine {
-    constructor() {
-        this.engine = null;
+    constructor(ollamaUrl = 'http://localhost:11434') {
+        this.ollamaUrl = ollamaUrl;
         this.state = 'OFFLINE';
         this.conversationHistory = [];
         this.notebookCells = [];
         this.abortController = null;
+        this.currentModel = null;
     }
 
-    async initialize(modelId) {
+    async checkOllamaConnection() {
         try {
-            this.state = 'CHECKING_WEBGPU';
-            if (!navigator.gpu) {
-                console.warn('WebGPU not available, will use CPU (10-20x slower)');
-            } else {
-                console.log('WebGPU available for acceleration');
+            const response = await fetch(`${this.ollamaUrl}/api/tags`);
+            if (!response.ok) {
+                throw new Error(`Ollama returned ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Ollama connection failed:', error);
+            return null;
+        }
+    }
+
+    async initialize(modelName = 'tinyllama') {
+        try {
+            this.state = 'CHECKING_CONNECTION';
+            console.log('Checking Ollama connection at:', this.ollamaUrl);
+
+            // Check if Ollama is running
+            const tags = await this.checkOllamaConnection();
+            if (!tags) {
+                throw new Error(`Ollama not running at ${this.ollamaUrl}. Run: ollama serve`);
             }
 
-            this.state = 'LOADING';
-            const webllm = window.webllm;
-            if (!webllm) {
-                // Provide detailed error info
-                const errorDetails = [];
-                errorDetails.push('WebLLM library not loaded');
-                if (window.webllmError) errorDetails.push(`Reason: ${window.webllmError}`);
-                if (window.webllmCDNLoading) errorDetails.push('CDN is still loading, please wait');
-                const fullError = errorDetails.join(' | ');
-                throw new Error(fullError);
+            console.log('Ollama connected! Available models:', tags.models?.map(m => m.name));
+
+            // Check if model is available
+            const modelAvailable = tags.models && tags.models.some(m => m.name === modelName);
+            if (!modelAvailable) {
+                throw new Error(`Model '${modelName}' not available. Available: ${tags.models?.map(m => m.name).join(', ')}`);
             }
 
-            // Log WebLLM version info
-            console.log('WebLLM detected. Version:', window.webllm.version || 'unknown');
-
-            // WebLLM 0.2.32 uses new MLCEngine()
-            if (typeof webllm.MLCEngine !== 'function') {
-                throw new Error('WebLLM MLCEngine not available. Loaded script may be corrupted.');
-            }
-
-            // Initialize MLCEngine (no constructor params needed for 0.2.32)
-            this.engine = new webllm.MLCEngine();
-            console.log('MLCEngine created successfully');
-
-            // Load the model (this is async and downloads weights)
-            try {
-                console.log(`Downloading model: ${modelId}`);
-                await this.engine.reload(modelId);
-                console.log(`Model loaded: ${modelId}`);
-            } catch (reloadError) {
-                console.error('Model reload failed:', reloadError);
-                throw new Error(`Failed to load model ${modelId}: ${reloadError.message}`);
-            }
-
+            this.currentModel = modelName;
             this.state = 'INDEXING';
             this.buildNotebookIndex();
 
             this.state = 'READY';
+            console.log(`Ahmad Bot ready with model: ${modelName}`);
             return true;
         } catch (error) {
             this.state = 'ERROR';
@@ -75,7 +69,7 @@ class AhmadJITEngine {
 
         let cellIndex = 0;
         cellElements.forEach((elem) => {
-            if (elem.contains(document.getElementById('ahmad-bot-panel'))) {
+            if (elem.contains(document.getElementById('ahmad-jit-box'))) {
                 return; // Skip Ahmad Bot's own UI
             }
 
@@ -92,6 +86,8 @@ class AhmadJITEngine {
                 cellIndex++;
             }
         });
+
+        console.log(`Indexed ${this.notebookCells.length} notebook cells`);
     }
 
     findRelevantCells(question, maxCells = 3) {
@@ -152,51 +148,64 @@ ${question}`;
 
         try {
             const systemPrompt = this.buildSystemPrompt(userMessage);
-            const messages = [
-                { role: 'system', content: systemPrompt },
-                ...this.conversationHistory,
-                { role: 'user', content: userMessage },
-            ];
+            const prompt = `${systemPrompt}\n\nAssistant:`;
 
-            // WebLLM 0.2.32 generate with streaming
-            let response;
-            try {
-                response = await this.engine.generate(messages, {
+            console.log(`Generating with model: ${this.currentModel}`);
+
+            // Call Ollama API with streaming
+            const response = await fetch(`${this.ollamaUrl}/api/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: this.currentModel,
+                    prompt: prompt,
+                    stream: true,
                     temperature: 0.2,
                     top_p: 0.9,
-                    max_tokens: 600,
-                    stream: true,
-                });
-            } catch (generateError) {
-                this.state = 'ERROR';
-                throw new Error(`Generation failed: ${generateError.message}`);
+                    num_predict: 600,
+                }),
+                signal: this.abortController.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ollama API returned ${response.status}`);
             }
 
-            // Handle streaming response
-            if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
-                throw new Error('Invalid response from engine: not an async iterable');
-            }
+            // Parse streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-            for await (const chunk of response) {
-                if (this.abortController.signal.aborted) {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done || this.abortController.signal.aborted) {
                     break;
                 }
 
-                // WebLLM 0.2.32 returns chunks with either text or delta.text
-                const token = chunk?.text ?? chunk?.delta?.text ?? chunk?.delta?.content ?? '';
-                if (token && typeof token === 'string') {
-                    fullResponse += token;
-                    if (onToken && typeof onToken === 'function') {
-                        try {
-                            onToken(token);
-                        } catch (callbackError) {
-                            console.error('onToken callback error:', callbackError);
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n').filter(l => l.trim());
+
+                for (const line of lines) {
+                    try {
+                        const json = JSON.parse(line);
+                        if (json.response) {
+                            fullResponse += json.response;
+                            if (onToken && typeof onToken === 'function') {
+                                try {
+                                    onToken(json.response);
+                                } catch (callbackError) {
+                                    console.error('onToken callback error:', callbackError);
+                                }
+                            }
                         }
+                    } catch (e) {
+                        // Skip invalid JSON lines
                     }
                 }
             }
 
-            // Store in conversation history (safe due to textContent usage in UI)
+            // Store in conversation history
             this.conversationHistory.push({ role: 'user', content: userMessage });
             this.conversationHistory.push({ role: 'assistant', content: fullResponse });
 
@@ -224,10 +233,8 @@ ${question}`;
     }
 
     unload() {
-        if (this.engine) {
-            this.engine.terminate?.();
-        }
-        this.engine = null;
+        // Ollama stays running, just reset state
+        this.currentModel = null;
         this.state = 'OFFLINE';
     }
 
