@@ -3,6 +3,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use crate::ed25519_keymanager::KeyStore;
+use signature::Signer;
 
 /// Receipt schema version 2.0 — Ed25519 signed, deterministic hashing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -117,6 +119,9 @@ pub struct PerformanceMetrics {
     pub cpu_time_ms: f64,
     pub memory_peak_bytes: u64,
 }
+
+// Custom Eq impl (f64 is not Eq, so we skip it)
+impl Eq for PerformanceMetrics {}
 
 impl ReceiptV2 {
     /// Create a new receipt (unsigned)
@@ -272,17 +277,17 @@ impl ReceiptV2 {
             return Err(format!("Public key must be 32 bytes, got {}", pubkey_bytes.len()));
         }
 
-        let signature = ed25519_dalek::Signature::from_bytes(
-            signature_bytes.as_slice().try_into()
-                .map_err(|_| "Invalid signature bytes".to_string())?
-        );
-        let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(
-            pubkey_bytes.as_slice().try_into()
-                .map_err(|_| "Invalid public key bytes".to_string())?
-        ).map_err(|e| format!("Invalid verifying key: {}", e))?;
+        let sig_array: [u8; 64] = signature_bytes.try_into()
+            .map_err(|_| "Invalid signature bytes".to_string())?;
+        let signature = ed25519_dalek::Signature::from_bytes(&sig_array);
+
+        let pk_array: [u8; 32] = pubkey_bytes.try_into()
+            .map_err(|_| "Invalid public key bytes".to_string())?;
+        let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(&pk_array)
+            .map_err(|e| format!("Invalid verifying key: {}", e))?;
 
         let message = self.receipt_hash.as_bytes();
-        match verifying_key.verify(message, &signature) {
+        match verifying_key.verify_strict(message, &signature) {
             Ok(()) => Ok(true),
             Err(_) => Ok(false),
         }
@@ -434,6 +439,30 @@ impl ReceiptChainV2 {
 
     pub fn is_sealed(&self) -> bool {
         self.sealed
+    }
+
+    /// Sign the head receipt with a key from KeyStore
+    pub fn sign_head(&mut self, keystore: &KeyStore, agent_id: &str) -> Result<(), String> {
+        let receipt = self.receipts.last_mut()
+            .ok_or("Cannot sign: no receipts in chain".to_string())?;
+
+        if self.sealed {
+            return Err("Cannot sign: chain is sealed".to_string());
+        }
+
+        // Get current key for agent
+        let (key_version, _) = keystore.get_current_key(agent_id)?;
+
+        // Sign with keystore
+        let signature = keystore.sign(agent_id, receipt.receipt_hash.as_bytes())?;
+
+        // Update receipt with signature
+        let metadata = keystore.get_key(agent_id, key_version)?;
+        receipt.signature = Some(signature);
+        receipt.signing_public_key = Some(metadata.public_key.clone());
+        receipt.key_version = Some(key_version);
+
+        Ok(())
     }
 }
 
