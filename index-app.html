@@ -107,5 +107,28 @@
     <script src="scripts/ahmad-bot-engine.js"></script>
     <script src="scripts/ahmad-bot-ui.js"></script>
     <script src="scripts/notebook-engine.js"></script>
+
+    <!-- Initialization -->
+    <script>
+        // Initialize notebook engine
+        window.notebookEngine = new NotebookEngine();
+
+        // Add sample cells
+        window.notebookEngine.addCell('code');
+        window.notebookEngine.addCell('markdown');
+        window.notebookEngine.addCell('code');
+
+        // Mount Ahmad Bot
+        try {
+            setTimeout(() => {
+                if (typeof AhmadBotUI !== 'undefined') {
+                    window.ahmadBot = new AhmadBotUI();
+                    window.ahmadBot.mount('#jit-launcher', '#jit-panel');
+                }
+            }, 100);
+        } catch (error) {
+            console.error('Ahmad Bot initialization failed:', error);
+        }
+    </script>
 </body>
 </html>
