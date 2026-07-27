@@ -1,0 +1,20 @@
+[package]
+name = "invariant-extractor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Invariant extraction — symbolic execution and abstract interpretation over SUBLEQ memory states"
+
+[dependencies]
+subleq-vm.workspace = true
+subleq-ir.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+z3.workspace = true
+boolector.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
