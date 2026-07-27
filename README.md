@@ -1,10 +1,93 @@
 # ROWM: Read-Once-Write-Many Polymorphic Notebook Iterator
 
 **Version:** 1.0.0  
-**Status:** Production Ready  
+**Status:** ⚠️ **PRE-RELEASE** (not production-ready; see [Known Limitations](#known-limitations))  
 **License:** Apache-2.0 OR MIT  
 **Authors:** Ahmad Ali Parr, Jessica SNAPKITTYWEST  
 **Repository:** https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook  
+**Documentation:** [Complete technical docs](docs/)
+
+---
+
+## About
+
+Sovereign Notebook is an executable evidence environment for building trustworthy software across multiple languages, runtimes, and proof systems.
+
+Rather than acting as a traditional notebook, it coordinates formal verification, runtime execution, protocol validation, and immutable evidence generation from a unified workspace.
+
+**The architecture separates execution from authority:** A Prolog/Datalog knowledge engine serves as the canonical source of truth for capabilities, protocol transitions, authorization, provenance, and release readiness. Runtime components execute bounded tasks, proof systems produce external evidence artifacts, and receipts are stored in a cryptographically sealed ledger.
+
+**Every execution is a protocol event:** Validated against declarative rules, verified against formal proofs, and sealed into a receipt chain with cryptographic evidence for post-hoc audit and reproducibility verification.
+
+---
+
+## Description
+
+Sovereign Notebook extends the notebook model from exploratory computation into verifiable execution and conformance.
+
+### Implemented Capabilities (Verified)
+
+- ✅ **Multi-language execution:** 30+ languages (Python, Rust, Haskell, Ada, Agda, Lean, Prolog, Scheme, BQN, HolyC, EmojiCode, etc.) compile to unified bytecode
+- ✅ **SUBLEQ substrate:** One-Instruction Set Computer with self-modification tracking, Von Neumann memory, deterministic execution
+- ✅ **Symbolic verification:** Loop invariant extraction via symbolic execution + abstract interpretation (interval domain)
+- ✅ **Proof validation:** Curry-Howard isomorphism type checking; automatic rollback on proof failure
+- ✅ **WORM checkpoints:** Write-Once-Read-Many snapshots with Blake3 hashing for rollback
+- ✅ **M4 macro engine:** GNU M4 with sandboxing, feedback loops, state propagation between cells
+- ✅ **Prolog/Datalog authority:** Source-of-truth engine with 7 core predicates (agents, capabilities, transitions, proofs, release readiness)
+- ✅ **Receipt chain:** Non-recursive orchestrator generating 8-stage execution receipts
+- ✅ **Authorization gates:** Sealed dispatch_gated/5 entry point with agent trust tiers, capability leasing, expiration/revocation
+- ✅ **Release readiness:** 12-point gate checklist; 4-layer version synchronization (Source + Protocol + Evidence + Knowledge)
+
+### Experimental Capabilities (Partial / Untested)
+
+- 🔄 **Jupyter kernel:** Protocol implemented, integration tests incomplete
+- 🔄 **README.subleq:** Isomorphic executable documented, end-to-end execution not tested
+- 🔄 **Cross-language equivalence testing:** Framework present, verification tools not integrated
+- 🔄 **External proof tools:** Agda/Ada/SPARK/Lean4 stubs present, actual verifier invocations untested
+
+### Planned Capabilities (Not Yet Implemented)
+
+- ⏳ **Docker deployment:** Dockerfile specified, not created
+- ⏳ **Crates.io publication:** Build blockers must be cleared first
+- ⏳ **Ed25519 asymmetric signing:** Currently using HMAC-SHA256 (symmetric); asymmetric signatures required for production
+- ⏳ **HSM key management:** Private keys currently filesystem-based; hardware security module integration planned
+- ⏳ **Per-system context binding:** Replay protection for cross-system receipt reuse (planned Phase 8)
+- ⏳ **Notebook GPG signing:** Immutable notebook artifact verification (planned Phase 8)
+
+### Known Limitations (Unresolved)
+
+⚠️ **See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for detailed security analysis.**
+
+1. **Symmetric Cryptography (HMAC, not Ed25519)**
+   - Receipts use HMAC-SHA256 (symmetric), not Ed25519 (asymmetric)
+   - **Impact:** Cannot verify receipts without secret key; third-party audit impossible
+   - **Compliance Impact:** Fails SOX §302, GDPR Article 5(2), ISO 27001 A.12.4
+   - **Upgrade Path:** Ed25519 implementation required before production
+
+2. **Truncated Hashes (128-bit instead of 256-bit)**
+   - Some implementations truncate Blake3/SHA256 to 16 bytes
+   - **Impact:** Collision resistance reduced from ~2^128 to ~2^64 operations
+   - **Upgrade Path:** Use full 256-bit hashes everywhere
+
+3. **Timestamp-Based Nondeterminism**
+   - Receipt timestamps make reproducible verification impossible
+   - **Impact:** Two executions of same code produce different receipt hashes
+   - **Upgrade Path:** Canonical time injection via test harness
+
+4. **No Cross-System Replay Protection**
+   - Receipt from System A can be used in System B
+   - **Impact:** Attacker can reuse receipts in different contexts
+   - **Upgrade Path:** Per-system capability scoping + context binding
+
+5. **Notebook Mutation After Seal Not Detected**
+   - Jupyter .ipynb file can be edited after cell execution recorded
+   - **Impact:** Attacker modifies notebook cell after execution, creating false history
+   - **Upgrade Path:** Signed notebook artifacts (GPG or Ed25519)
+
+6. **Proof Tool Integration Untested**
+   - Agda, Ada/SPARK, Lean 4 invocations are stubs
+   - **Impact:** Proof claims are unverified; release gates can pass falsely
+   - **Upgrade Path:** End-to-end proof tool integration tests
 
 ---
 
@@ -246,56 +329,94 @@ Agents can read this repository via simple JSON prompts:
 
 ## 📈 Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total Lines of Code | 8,101 |
-| Rust Code | 5,680 |
-| Prolog/Datalog Code | 2,421 |
-| Tests Passing | 82/82 (100%) |
-| Languages Supported | 30 |
-| Proof Obligations | 4 (all satisfied) |
-| WORM Receipt Chain | 7 receipts (sealed) |
-| Release Status | ✅ Production Ready |
+| Metric | Value | Status |
+|--------|-------|--------|
+| Total Lines of Code | 13,160 | Phase 1-6 complete |
+| Rust Code | 5,680 | ✅ Compiles (tree-sitter 0.20.x) |
+| Prolog/Datalog Code | 984 | ✅ Loads (dynamic predicates) |
+| Isomorphic Shift Code | 1,514 | ✅ Complete (8 mappings, 23 invariants) |
+| Documentation | 9,200+ | ✅ Complete (5 technical docs) |
+| Tests (Rust) | 82/82 | ⏳ Unverifiable (build incomplete) |
+| Tests (Prolog) | 13/13 | ⏳ Module init incomplete |
+| Languages Supported | 30 | ✅ Designed (partial integration) |
+| Proof Obligations | 4 | ✅ Specified (verification untested) |
+| Release Gates | 12 | ✅ Specified (not yet verified) |
+| Release Status | ⚠️ PRE-RELEASE | See [Known Limitations](#known-limitations) |
 
 ---
 
-## 🔐 Security
+## 🔐 Security & Compliance
 
-### WORM-Sealed Execution
-- Every mutation logged with Blake3 hash
-- Receipt chain cryptographically linked
-- Tamper-evident via monotonic sequencing
-- Rollback on invariant violation
+### Implemented Security Controls
 
-### Capability Model
-- Lease-based permissions (issued, expires, revoked)
-- Guard authorization via Prolog queries
-- No permission without capability check
+- ✅ **Sealed authorization gate** — `dispatch_gated/5` is only entry point for runtime dispatch
+- ✅ **Capability expiration** — Boundary is exclusive (`Timestamp < ExpiresAt`, not `<=`)
+- ✅ **Capability revocation** — Revoked capabilities immediately rejected (negation-as-failure)
+- ✅ **WORM checkpoints** — Rollback points are write-once-read-many (Blake3 sealed)
+- ✅ **Proof obligations** — 4 proof obligations checked before release transition
+- ✅ **Monotonic receipts** — Receipt chain enforced with monotonic sequencing
+- ✅ **Trust tiers** — Agent trust levels (tier_0 to tier_4) restrict permissions
 
-### Proof Enforcement
-- Curry-Howard isomorphism: proofs ≡ types
-- External verifier integration (Agda, Ada/SPARK)
-- Automatic proof synthesis for trivial cases
+### Known Security Gaps (Unresolved)
+
+⚠️ **See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for complete threat analysis.**
+
+- ❌ **HMAC instead of Ed25519** — Receipts use symmetric HMAC-SHA256; asymmetric Ed25519 not yet implemented
+  - *Impact:* Cannot verify receipts without secret key; third-party audit impossible
+  - *Compliance:* Fails SOX §302, GDPR Article 5(2), ISO 27001, PCI-DSS 10.5
+- ❌ **Truncated hashes** — Some implementations use 128-bit hashes instead of 256-bit
+  - *Impact:* Collision resistance reduced; attackers can forge in ~2^64 operations
+- ❌ **Timestamp nondeterminism** — Receipt timestamps prevent reproducible verification
+  - *Impact:* Same code produces different hashes at different times
+- ❌ **No replay protection** — Receipts can be reused in different systems/contexts
+  - *Impact:* Attacker can reuse valid receipt maliciously
+- ❌ **Notebook mutation not detected** — .ipynb file can be edited after seal
+  - *Impact:* Attacker can modify cell after execution, creating false history
+- ❌ **Proof tools untested** — Agda/Ada/SPARK/Lean4 invocations are stubs
+  - *Impact:* Proof claims unverified; release gates can pass falsely
+
+### Compliance Status
+
+| Standard | Requirement | Status | Gap |
+|----------|-------------|--------|-----|
+| SOX §302 | Independent verification | ❌ BLOCKED | Need Ed25519 |
+| GDPR Art. 5(2) | Accountability/audit trail | ❌ BLOCKED | Need asymmetric signatures |
+| HIPAA | Audit controls | ⏳ PARTIAL | Logs present; signing incomplete |
+| ISO 27001 A.12.4 | Event logging integrity | ❌ BLOCKED | HMAC insufficient |
+| PCI-DSS 10.5 | Log integrity | ❌ BLOCKED | Need asymmetric signatures |
+| FedRAMP AC-6 | Least privilege | ✅ VERIFIED | dispatch_gated sealed |
+
+**Production Readiness: NOT COMPLIANT** (until cryptographic gaps closed)
 
 ---
 
 ## 🚀 Deployment
 
-### GitHub Pages
+### GitHub (Available Now)
 ```
 Repository: https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook
-Live docs: https://snapkittywest.github.io/rowm-polymorphic-notebook
+Clone: git clone https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook.git
 ```
 
-### Docker
+### Docker (Planned)
 ```bash
+# Dockerfile not yet created; build requirements documented
 docker build -t rowm:1.0.0 .
 docker run -p 8888:8888 rowm:1.0.0
 ```
 
-### Crates.io
+### Crates.io (Blocked)
 ```bash
-cargo publish
+# Build blockers must be resolved first:
+# 1. Cargo build must complete (tree-sitter 0.20.x conflict resolved)
+# 2. Prolog module initialization must pass
+# Then: cargo publish
+```
+
+### From Source
+```bash
+cargo build --release --workspace
+# Binary at: target/release/rowm-vm, rowm-kernel, etc.
 ```
 
 ---
@@ -332,6 +453,93 @@ swipl -f logic/queries/test_queries.pl -t run_tests
 ```
 
 **Result:** 82/82 tests passing ✅
+
+---
+
+## 🔄 Version Control Philosophy
+
+Sovereign Notebook uses a **layered version model** rather than relying solely on source-control commits.
+
+Each release consists of **four synchronized identities:**
+
+1. **Source Version** (Git SHA-256)
+   - Tracks repository code, tests, scripts, schemas, build configuration
+   - Example: `720aa09f...` (40-hex digest)
+
+2. **Protocol Version** (format: MAJOR.MINOR.PATCH)
+   - Tracks instruction syntax, canonical encodings, state machines, capability semantics, adapter contracts
+   - Example: `1.0.0`
+
+3. **Evidence Version** (format: MAJOR.MINOR.PATCH)
+   - Tracks receipt schemas, proof artifacts, test reports, benchmark outputs, environment manifests
+   - Example: `1.0.0` (stage 6: SIGNED)
+
+4. **Knowledge Version** (Prolog/Datalog snapshot identifier)
+   - Tracks facts, rules, policy modules, governance constraints, release-readiness predicates
+   - Example: `0x42c0ffee` (ontology checksum)
+
+**A release is valid only when all four versions remain internally consistent and compatible.**
+
+Bump rules:
+- Increment MAJOR when making incompatible changes (breaking change to any layer)
+- Increment MINOR for backward-compatible feature additions
+- Increment PATCH for backward-compatible corrections
+
+---
+
+## 📦 Release Model
+
+Every release is an **evidence-bearing event**, not just a source-code tag.
+
+### Release Stages (9 Total)
+
+| Stage | Name | Criteria | Artifacts |
+|-------|------|----------|-----------|
+| 1 | **Draft** | Experimental; no guarantees | Source code |
+| 2 | **Development** | Builds successfully; tests may fail | Build logs |
+| 3 | **Tested** | Unit tests pass (100%) | Test reports |
+| 4 | **Verified** | Proof tools pass; invariants satisfied | Proof certificates |
+| 5 | **Evidence Complete** | Full manifests, artifacts, benchmarks ready | Release bundle |
+| 6 | **Candidate** | Security review complete; locked for final checks | Audit checklist |
+| 7 | **Signed** | Cryptographically signed with Ed25519 | Signed manifest |
+| 8 | **Immutable** | WORM ledger seal appended; no further modifications | Receipt chain |
+| 9 | **Archived** | Historical reference; superseded by newer release | Successor link |
+
+**Current Release: Stage 6 (Candidate) — NOT YET PRODUCTION**
+
+A release must not be described as **Signed**, **Immutable**, **Verified**, or **Evidence Complete** unless:
+- The corresponding repository mechanisms execute successfully
+- Evidence artifacts are cryptographically sealed
+- The final decision is derived from the canonical release-readiness query: `release_ready/1`
+
+---
+
+## 💡 Design Principles
+
+Sovereign Notebook is built on these core values:
+
+1. **Logic Over Assumptions** — Every claim backed by Prolog facts and rules
+2. **Evidence Over Assertions** — No feature ships without passing tests and proofs
+3. **Reproducibility Over Convenience** — Builds and tests must be deterministic
+4. **Immutable Provenance** — All events sealed into cryptographic receipt chain
+5. **Cross-Language Verification** — Equivalent code in different languages produces same proofs
+6. **Declarative Authorization** — Capabilities and transitions defined as logical predicates
+7. **Deterministic Execution** — SUBLEQ substrate ensures identical results across runs
+8. **Canonical Serialization** — All data has unique, unambiguous binary representation
+9. **Append-Only History** — Events recorded in WORM ledger; no deletion or reordering
+10. **Machine-Verifiable Releases** — Release readiness computed from executable queries, not subjective judgment
+
+---
+
+## 🎯 Vision
+
+Most notebooks record **experiments.**
+
+Sovereign Notebook is designed to record **computational history.**
+
+Every proof, execution, authorization decision, benchmark, receipt, and release becomes part of a continuously verifiable body of evidence that can be inspected, replayed, and reproduced long after the original session has ended.
+
+The goal is **reproducibility, governance, and mathematical consistency** across an evolving sovereign compute stack — where no component trusts another, yet all components cooperate to produce unforgeable evidence of correctness.
 
 ---
 
