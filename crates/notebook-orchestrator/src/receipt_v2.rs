@@ -4,6 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use crate::ed25519_keymanager::KeyStore;
+use crate::replay_protection::GlobalReplayProtection;
 use signature::Signer;
 
 /// Receipt schema version 2.0 — Ed25519 signed, deterministic hashing
@@ -335,6 +336,9 @@ impl ReceiptV2 {
 pub struct ReceiptChainV2 {
     receipts: Vec<ReceiptV2>,
     sealed: bool,
+    /// Replay protection state (not serialized with receipts)
+    #[serde(skip)]
+    replay_protection: Option<GlobalReplayProtection>,
 }
 
 impl ReceiptChainV2 {
@@ -342,6 +346,15 @@ impl ReceiptChainV2 {
         ReceiptChainV2 {
             receipts: Vec::new(),
             sealed: false,
+            replay_protection: Some(GlobalReplayProtection::default()),
+        }
+    }
+
+    pub fn new_with_replay_protection(replay_protection: GlobalReplayProtection) -> Self {
+        ReceiptChainV2 {
+            receipts: Vec::new(),
+            sealed: false,
+            replay_protection: Some(replay_protection),
         }
     }
 
@@ -360,6 +373,11 @@ impl ReceiptChainV2 {
             receipt.verify_signature()?;
         }
 
+        // Check replay protection (if enabled)
+        if let Some(ref mut replay_protection) = self.replay_protection {
+            replay_protection.check_and_record(&receipt.context, &receipt.nonce, receipt.monotonic_counter)?;
+        }
+
         // Verify monotonic sequence
         if let Some(last) = self.receipts.last() {
             if receipt.sequence_number <= last.sequence_number {
@@ -373,11 +391,6 @@ impl ReceiptChainV2 {
             // Verify monotonic counter
             if receipt.monotonic_counter <= last.monotonic_counter {
                 return Err("Monotonic counter must increase".to_string());
-            }
-
-            // Detect replay
-            if receipt.nonce == last.nonce && receipt.context == last.context {
-                return Err("Duplicate nonce+context detected (replay attack)".to_string());
             }
         } else {
             // First receipt must have zero previous hash
