@@ -1,0 +1,25 @@
+[package]
+name = "notebook-kernel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Jupyter kernel + execution ring — decentralized cell scheduling with zero-copy IPC"
+
+[dependencies]
+subleq-vm.workspace = true
+subleq-ir.workspace = true
+polyglot-frontend.workspace = true
+invariant-extractor.workspace = true
+proof-validator.workspace = true
+m4-morph.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+bytes.workspace = true
+crossbeam.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
