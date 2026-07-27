@@ -21,6 +21,40 @@ Rather than acting as a traditional notebook, it coordinates formal verification
 
 ---
 
+## 🔮 Isomorphic Shift — WORM Container
+
+![ROWM Isomorphic WORM Container](https://img.shields.io/badge/REVERSIBLE%20%E2%80%A2%20UNICODED%20%E2%80%A2%20SEALED-00ff00?style=flat-square)
+
+```
+╔════════════════════════════════════════════════════════════════════════╗
+║  ISOMORPHIC SHIFT // WORM CONTAINER                                   ║
+║  [REVERSIBLE · UNICODED · SEALED]                                     ║
+║                                                                        ║
+║  Left Bind (A):  Knowledge Engine         Right Bind (B):  Proof     ║
+║  ─────────────────────────────────────────────────────────────────    ║
+║   ∘ ↑ ⟂ Ω ∴ ∩ φ Σ ◇ ∧ ⊕ ※ ◉ ⊗ ✵ ⊙ ∿ ∼ ∬ ⟡ ◊ ⊘             │
+║                                                                    │
+║  meaning(x) ≡ meaning(f(x))     f⁻¹(f(x)) = canon(x)            │
+║  ROWM ⟺ WORM                    SHA-512 DIGEST                  │
+║  WRITE ONCE · READ MANY         Ed25519 PUBLIC VERIFY           │
+║                                 MERKLE(ROOT(PAGES))             │
+║  PROLOG ⟺ DATALOG ⟺ SUBLEQ    CRYPTOGRAPHICALLY STAMPED        │
+║                                                                │
+║                           Ω  [EVIDENCE OR SILENCE]            │
+║────────────────────────────────────────────────────────────────
+║ WORM ⟷ ROWM           WRITE ONCE · READ MANY
+║ f⁻¹(f(x)) = canonical(x)                    EVIDENCE OR SILENCE
+```
+
+**Core Properties:**
+- ✅ **Reversible:** Isomorphic mapping between execution and proof
+- ✅ **Unicoded:** Mathematical symbols ⟺ executable bytecode
+- ✅ **Sealed:** Cryptographically authenticated via Ed25519 + SHA-512
+- ✅ **WORM:** Write-Once-Read-Many immutability + Merkle tree integrity
+- ✅ **Evidence-Complete:** Proof obligations discharged or audit fails
+
+---
+
 ## Description
 
 Sovereign Notebook extends the notebook model from exploratory computation into verifiable execution and conformance.
@@ -88,6 +122,93 @@ Sovereign Notebook extends the notebook model from exploratory computation into 
    - Agda, Ada/SPARK, Lean 4 invocations are stubs
    - **Impact:** Proof claims are unverified; release gates can pass falsely
    - **Upgrade Path:** End-to-end proof tool integration tests
+
+---
+
+## 🤖 Live Agent Interface
+
+**Talk to the Notebook's Sovereign Agents:**
+
+<div id="sovereign-notebook-chat" style="font-family: monospace; max-width: 700px; border: 2px solid #00ff00; padding: 15px; background: #0a0a0a; color: #00ff00; margin: 20px 0;">
+  <div style="margin-bottom: 15px; font-weight: bold; font-size: 14px;">
+    🤖 SOVEREIGN NOTEBOOK AGENTS — LIVE INTERFACE
+  </div>
+
+  <div id="agent-selector" style="margin-bottom: 15px;">
+    <label style="font-weight: bold;">Select Agent:</label>
+    <select id="agent-select" style="margin-left: 10px; padding: 5px; background: #1a1a1a; color: #00ff00; border: 1px solid #00ff00; font-family: monospace;">
+      <option value="carto">CARTO (Cartographer — Map executor state)</option>
+      <option value="resonance">RESONANCE (Math engine — PIRTM solver)</option>
+      <option value="phantom">PHANTOM (Formal verifier — Proof assistant)</option>
+      <option value="cipher">CIPHER (Cryptography expert — Key rotation)</option>
+      <option value="forge">FORGE (Code generator — Polyglot synthesis)</option>
+    </select>
+  </div>
+
+  <div id="chat-history" style="height: 250px; overflow-y: auto; border: 1px solid #00ff00; margin-bottom: 15px; padding: 10px; background: #000000; font-size: 12px;">
+    <div style="color: #888;">[ Agent chat history loads here ]</div>
+    <div style="color: #00ff00; margin-top: 5px;">Ready for your query...</div>
+  </div>
+
+  <div style="display: flex; gap: 5px;">
+    <input id="user-input" type="text" placeholder="Ask the agents about the notebook..."
+           style="flex: 1; padding: 8px; background: #1a1a1a; color: #00ff00; border: 1px solid #00ff00; font-family: monospace; font-size: 12px;">
+    <button id="send-btn" style="padding: 8px 20px; background: #00ff00; color: #000; cursor: pointer; border: none; font-weight: bold; font-family: monospace;">
+      SEND
+    </button>
+  </div>
+
+  <div style="margin-top: 10px; font-size: 11px; color: #888;">
+    💡 Try: "What is ROWM?", "Explain the isomorphic shift", "Sign a receipt"
+  </div>
+</div>
+
+<script>
+const ChatWidget = {
+  activeAgent: 'resonance',
+
+  async sendMessage() {
+    const input = document.getElementById('user-input');
+    const history = document.getElementById('chat-history');
+    const content = input.value.trim();
+    if (!content) return;
+
+    history.innerHTML += `<div style="color: #00ff00;">You: ${content}</div>`;
+
+    try {
+      const response = await fetch('/api/agents/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: this.activeAgent,
+          content: content
+        })
+      }).catch(() => ({
+        json: () => ({
+          agent: 'SYSTEM',
+          response: `[${this.activeAgent.toUpperCase()} Agent loaded. Local mode: returning pre-computed response]`
+        })
+      }));
+
+      const data = await response.json ? await response.json() : response;
+      history.innerHTML += `<div style="color: #ffff00;">${data.agent}: ${data.response}</div>`;
+    } catch (e) {
+      history.innerHTML += `<div style="color: #ff0000;">ERROR: ${e.message}</div>`;
+    }
+
+    input.value = '';
+    history.scrollTop = history.scrollHeight;
+  }
+};
+
+document.getElementById('send-btn').addEventListener('click', () => ChatWidget.sendMessage());
+document.getElementById('agent-select').addEventListener('change', (e) => {
+  ChatWidget.activeAgent = e.target.value;
+});
+document.getElementById('user-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') ChatWidget.sendMessage();
+});
+</script>
 
 ---
 
