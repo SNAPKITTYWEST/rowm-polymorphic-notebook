@@ -1,11 +1,8 @@
 # ROWM: Read-Once-Write-Many Polymorphic Notebook Iterator
 
-**Version:** 1.0.0  
-**Status:** ⚠️ **PRE-RELEASE** (not production-ready; see [Known Limitations](#known-limitations))  
-**License:** Apache-2.0 OR MIT  
 **Authors:** Ahmad Ali Parr, Jessica SNAPKITTYWEST  
 **Repository:** https://github.com/SNAPKITTYWEST/rowm-polymorphic-notebook  
-**Documentation:** [Complete technical docs](docs/)
+**Documentation:** [Technical docs](docs/)
 
 ---
 
