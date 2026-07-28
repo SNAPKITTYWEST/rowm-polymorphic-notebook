@@ -67,5 +67,18 @@
     <!-- Ahmad Bot JIT Engine (WebLLM imported dynamically as ES module) -->
     <script src="./js/ahmad-jit-engine.js"></script>
     <script src="./js/ahmad-jit-ui.js"></script>
+
+    <!-- Ahmad Orbital Agent (ISS telemetry verification) -->
+    <script src="./js/ahmad-orbital-agent.js"></script>
+    <script>
+      // Initialize orbital agent once page loads
+      document.addEventListener('DOMContentLoaded', () => {
+        window.ahmadOrbitalAgent = new AhmadOrbitalAgent({
+          voyagerUrl: 'http://localhost:4299',
+          oracleUrl: 'http://localhost:3333',
+        });
+        console.log('✓ Ahmad Orbital Agent initialized');
+      });
+    </script>
 </body>
 </html>
