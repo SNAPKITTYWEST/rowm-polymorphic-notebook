@@ -167,8 +167,9 @@ ${question}`;
 
             console.log('Generating response with WebLLM...');
 
-            // WebLLM generate() returns async iterable of response chunks
-            const response = await this.engine.generate(messages, {
+            // WebLLM completion() is the correct streaming method
+            const response = await this.engine.completion({
+                messages: messages,
                 temperature: 0.2,
                 top_p: 0.9,
                 max_tokens: 600,
@@ -181,13 +182,13 @@ ${question}`;
                     break;
                 }
 
-                // WebLLM chunk has format: { text: "token" } or { delta: { text: "token" } }
-                const token = chunk.text ?? chunk.delta?.text ?? '';
-                if (token && typeof token === 'string') {
-                    fullResponse += token;
+                // WebLLM chunk has format: { choices: [{ delta: { content: "token" } }] }
+                const content = chunk.choices?.[0]?.delta?.content ?? '';
+                if (content && typeof content === 'string') {
+                    fullResponse += content;
                     if (onToken && typeof onToken === 'function') {
                         try {
-                            onToken(token);
+                            onToken(content);
                         } catch (callbackError) {
                             console.error('onToken callback error:', callbackError);
                         }
