@@ -68,16 +68,17 @@
     <script src="./js/ahmad-jit-engine.js"></script>
     <script src="./js/ahmad-jit-ui.js"></script>
 
-    <!-- Ahmad Orbital Agent (ISS telemetry verification) -->
+    <!-- Ahmad Orbital Agent (queries Ahmad Orchestrator in sov-kernel-monster) -->
     <script src="./js/ahmad-orbital-agent.js"></script>
     <script>
       // Initialize orbital agent once page loads
       document.addEventListener('DOMContentLoaded', () => {
         window.ahmadOrbitalAgent = new AhmadOrbitalAgent({
           voyagerUrl: 'http://localhost:4299',
-          oracleUrl: 'http://localhost:3333',
+          ahmadUrl: 'http://localhost:5555', // Ahmad Orchestrator in sov-kernel-monster
         });
         console.log('✓ Ahmad Orbital Agent initialized');
+        console.log('Querying Ahmad Orchestrator at http://localhost:5555...');
       });
     </script>
 </body>

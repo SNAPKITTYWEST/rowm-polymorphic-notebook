@@ -7,41 +7,40 @@
 class AhmadOrbitalAgent {
   constructor(options = {}) {
     this.voyagerUrl = options.voyagerUrl || 'http://localhost:4299';
-    this.oracleUrl = options.oracleUrl || 'http://localhost:3333'; // sov-kernel-monster API
+    this.ahmadUrl = options.ahmadUrl || 'http://localhost:5555'; // Ahmad Orchestrator in sov-kernel-monster
     this.notebookBox = document.getElementById('ahmad-jit-box');
     this.verificationLog = [];
     this.state = 'IDLE';
   }
 
   /**
-   * Fetch live ISS telemetry from BOB VOYAGER
+   * Query Ahmad Orchestrator for verification
    */
-  async fetchTelemetry() {
+  async queryAhmadOrchestrator() {
     try {
-      const res = await fetch(`${this.voyagerUrl}/api/telemetry`);
-      return await res.json();
-    } catch (e) {
-      console.error('[AHMAD-ORBITAL] Fetch telemetry failed:', e.message);
-      return { ok: false, error: e.message };
-    }
-  }
-
-  /**
-   * Query orbital verification oracle
-   */
-  async queryVerificationOracle(telemetry) {
-    try {
-      const res = await fetch(`${this.oracleUrl}/verify`, {
+      const res = await fetch(`${this.ahmadUrl}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telemetry,
           timestamp: new Date().toISOString(),
         }),
       });
       return await res.json();
     } catch (e) {
-      console.error('[AHMAD-ORBITAL] Oracle query failed:', e.message);
+      console.error('[AHMAD-ORBITAL] Orchestrator query failed:', e.message);
+      return { ok: false, error: e.message };
+    }
+  }
+
+  /**
+   * Query Ahmad status
+   */
+  async getAhmadStatus() {
+    try {
+      const res = await fetch(`${this.ahmadUrl}/status`);
+      return await res.json();
+    } catch (e) {
+      console.error('[AHMAD-ORBITAL] Status query failed:', e.message);
       return { ok: false, error: e.message };
     }
   }
@@ -84,27 +83,28 @@ class AhmadOrbitalAgent {
   }
 
   /**
-   * Run single verification cycle
+   * Run single verification cycle (via Ahmad Orchestrator)
    */
   async runVerification() {
     this.state = 'VERIFYING';
 
-    const telemetry = await this.fetchTelemetry();
-    if (!telemetry.ok) {
-      console.error('[AHMAD-ORBITAL] Failed to fetch telemetry');
+    const result = await this.queryAhmadOrchestrator();
+    if (!result.ok) {
+      console.error('[AHMAD-ORBITAL] Ahmad Orchestrator error:', result.error);
       this.state = 'ERROR';
-      return { ok: false, error: 'Failed to fetch telemetry' };
+      return { ok: false, error: result.error };
     }
 
-    const verification = await this.queryVerificationOracle(telemetry.telemetry);
-    if (!verification.ok) {
-      console.error('[AHMAD-ORBITAL] Verification oracle error');
+    // Extract verification from orchestrator response
+    const verification = result.verification;
+    if (!verification) {
       this.state = 'ERROR';
-      return { ok: false, error: verification.error };
+      return { ok: false, error: 'No verification in response' };
     }
 
     this.verificationLog.push({
       timestamp: new Date().toISOString(),
+      decision: result.decision,
       ...verification,
     });
 
